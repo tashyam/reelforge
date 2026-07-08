@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReelForge</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0f;color:#f0efff;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+.topbar{background:#111118;border-bottom:1px solid #1e1e2a;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-size:18px;font-weight:900;}
+.logo span{color:#7c6dfa;}
+.logo small{font-size:11px;color:#5c5a78;font-weight:400;margin-left:6px;}
+.srow{display:flex;align-items:center;gap:8px;font-size:12px;color:#9b99b8;}
+.dot{width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;flex-shrink:0;}
+.dot.busy{background:#fbbf24;box-shadow:0 0 6px #fbbf24;}
+.dot.err{background:#f87171;box-shadow:0 0 6px #f87171;}
+.main{max-width:860px;margin:0 auto;padding:22px 14px 80px;}
+
+/* PIPELINE */
+.pipeline{display:flex;align-items:center;gap:3px;margin-bottom:22px;overflow-x:auto;padding-bottom:2px;}
+.step{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;color:#5c5a78;border:1px solid transparent;}
+.step.active{background:rgba(124,109,250,.15);border-color:#7c6dfa;color:#a89bfc;}
+.step.done{color:#4ade80;}
+.arr{color:#3a3a50;font-size:13px;padding:0 1px;}
+
+/* CARDS */
+.card{background:#111118;border:1px solid #1e1e2a;border-radius:12px;padding:18px;margin-bottom:14px;}
+.card.locked{opacity:.35;pointer-events:none;}
+.card.active{border-color:#2a2a3a;}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.ct{font-size:15px;font-weight:700;}
+.badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:20px;}
+.bp{background:#1e1e2a;color:#5c5a78;}
+.ba{background:rgba(124,109,250,.15);color:#a89bfc;}
+.bd{background:rgba(74,222,128,.1);color:#4ade80;}
+
+/* INPUTS */
+textarea,select,input[type=number],input[type=text],input[type=password]{
+  background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;
+  color:#f0efff;font-family:Arial,sans-serif;font-size:13px;
+  padding:9px 12px;outline:none;width:100%;}
+textarea{resize:none;}
+textarea:focus,select:focus,input:focus{border-color:#7c6dfa;}
+select{width:auto;cursor:pointer;padding:7px 10px;}
+textarea::placeholder,input::placeholder{color:#5c5a78;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;white-space:nowrap;font-family:Arial,sans-serif;}
+.btnp{background:#7c6dfa;color:#fff;}
+.btnp:hover{background:#6b5df5;}
+.btnp:disabled{opacity:.35;cursor:not-allowed;}
+.btns{background:#1a1a24;color:#f0efff;border:1px solid #2a2a3a;}
+.btns:hover{background:#22222f;}
+.btng{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.2);}
+.btng:hover{background:rgba(74,222,128,.2);}
+.btnsm{padding:6px 12px;font-size:12px;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.mt8{margin-top:8px;}.mt12{margin-top:12px;}
+
+/* LOADING OVERLAY */
+#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.9);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:18px;backdrop-filter:blur(4px);}
+#loadingOverlay.show{display:flex;}
+.spinner{width:44px;height:44px;border:3px solid #1e1e2a;border-top-color:#7c6dfa;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ltitle{font-size:17px;color:#a89bfc;font-weight:700;text-align:center;}
+.lsub{font-size:12px;color:#5c5a78;text-align:center;max-width:260px;line-height:1.7;}
+.lsteps{display:flex;flex-direction:column;gap:7px;}
+.ls{font-size:12px;color:#5c5a78;}
+.ls.act{color:#a89bfc;}
+.ls.don{color:#4ade80;}
+.ltimer{font-size:13px;color:#fbbf24;font-family:monospace;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:6px;padding:4px 12px;}
+
+/* ERROR */
+.errbox{display:none;margin-top:10px;padding:12px 14px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);border-radius:10px;font-size:12px;color:#f87171;line-height:1.8;}
+.errbox.show{display:block;}
+
+/* SCENE BLOCKS */
+.sblock{background:#1a1a24;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px;}
+.smeta{display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap;}
+.snum{font-size:11px;color:#5c5a78;font-family:monospace;}
+.stag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:4px;}
+.t-hook{background:rgba(251,191,36,.12);color:#fbbf24;}
+.t-setup,.t-main{background:rgba(96,165,250,.1);color:#60a5fa;}
+.t-reveal{background:rgba(167,139,250,.12);color:#c4b5fd;}
+.t-bridge{background:rgba(248,113,113,.1);color:#f87171;}
+.t-cta{background:rgba(74,222,128,.1);color:#4ade80;}
+.durbadge{display:flex;align-items:center;gap:4px;font-size:11px;color:#a89bfc;background:#22222f;border:1px solid #2a2a3a;border-radius:4px;padding:2px 7px;font-family:monospace;}
+.durbadge input{width:20px;background:transparent;border:none;outline:none;color:#a89bfc;font-family:monospace;font-size:11px;padding:0;text-align:center;}
+.wc{font-size:10px;color:#5c5a78;font-family:monospace;margin-left:auto;}
+.sscript{min-height:44px;margin-bottom:7px;font-size:13px;}
+.plabel{font-size:11px;color:#5c5a78;margin-bottom:3px;}
+.sprompt{font-size:11px;color:#9b99b8;font-family:monospace;min-height:28px;}
+
+/* VOICE */
+.waveform{height:40px;background:#1a1a24;border:1px solid #222;border-radius:8px;display:flex;align-items:center;gap:2px;padding:6px 10px;cursor:pointer;overflow:hidden;margin-top:10px;}
+.wbar{width:3px;background:#7c6dfa;border-radius:2px;opacity:.45;}
+.wbar.playing{animation:wav 1.1s ease-in-out infinite;}
+@keyframes wav{0%,100%{height:5px;opacity:.3;}50%{height:24px;opacity:1;}}
+
+/* EXPORT */
+.export-box{background:#1a1a24;border:1px solid #2a2a3a;border-radius:10px;padding:16px;margin-top:10px;}
+.export-title{font-size:13px;font-weight:700;margin-bottom:8px;color:#a89bfc;}
+.export-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e1e2a;font-size:12px;color:#9b99b8;}
+.export-item:last-child{border-bottom:none;}
+.export-icon{font-size:18px;flex-shrink:0;}
+
+/* MEMORY */
+.mlog{background:#1a1a24;border:1px solid #222;border-radius:8px;padding:10px 12px;margin-top:8px;}
+.mitem{font-size:12px;color:#9b99b8;padding:4px 0;border-bottom:1px solid #1e1e2a;display:flex;gap:7px;}
+.mitem:last-child{border-bottom:none;}
+
+/* STATS */
+.stats{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+.stat{font-size:12px;color:#9b99b8;}
+.stat b{color:#a89bfc;}
+.warn{color:#f87171;font-size:11px;}
+
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1a1a24;border:1px solid #2a2a3a;color:#f0efff;padding:9px 18px;border-radius:20px;font-size:13px;z-index:2000;animation:tin .25s ease;white-space:nowrap;pointer-events:none;}
+@keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="ltitle" id="ltitle">Generating Script…</div>
+  <div class="lsub" id="lsub">Gemini is writing your script. Usually takes 10–20 seconds.</div>
+  <div class="ltimer" id="ltimer">0s</div>
+  <div class="lsteps">
+    <div class="ls act" id="ls1">⟳ Sending to Gemini AI…</div>
+    <div class="ls" id="ls2">◯ Waiting for response…</div>
+    <div class="ls" id="ls3">◯ Parsing script…</div>
+  </div>
+  <button class="btn btns btnsm" onclick="cancelLoading()" style="margin-top:8px;">✕ Cancel</button>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">Reel<span>Forge</span><small>by Gemini AI</small></div>
+  <div class="srow"><span class="dot" id="sdot"></span><span id="stext">Ready</span></div>
+</div>
+
+<div class="main">
+
+<!-- PIPELINE -->
+<div class="pipeline">
+  <div class="step active" id="pill1">① Script</div><div class="arr">›</div>
+  <div class="step" id="pill2">② Voice</div><div class="arr">›</div>
+  <div class="step" id="pill3">③ Prompts</div><div class="arr">›</div>
+  <div class="step" id="pill4">④ Export</div>
+</div>
+
+<!-- ── STEP 1: SCRIPT ── -->
+<div class="card active" id="card1">
+  <div class="ch"><div class="ct">① Script Generator</div><span class="badge ba" id="badge1">Active</span></div>
+
+  <!-- API KEY -->
+  <div style="margin-bottom:12px;">
+    <div style="font-size:11px;color:#5c5a78;margin-bottom:5px;">Google AI Studio API Key</div>
+    <div class="row">
+      <input type="password" id="apiKey" placeholder="AIza… or AQ.AB… — paste your key here" style="flex:1;">
+      <button class="btn btns btnsm" onclick="saveKey()">Save Key</button>
+    </div>
+    <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Get free key at <a href="https://aistudio.google.com" target="_blank" style="color:#7c6dfa;">aistudio.google.com</a> → Get API Key</div>
+  </div>
+
+  <hr>
+
+  <textarea id="topicInput" rows="2" placeholder="Video topic — e.g. 'Why do cats purr?', 'The science of sleep', 'How ancient Rome worked'…" style="margin-bottom:10px;"></textarea>
+
+  <div class="row" style="margin-bottom:12px;">
+    <select id="toneSelect">
+      <option value="educational">📚 Educational</option>
+      <option value="curious">🔍 Curious/Mystery</option>
+      <option value="story">📖 Story-driven</option>
+      <option value="shocking">⚡ Shocking Facts</option>
+    </select>
+    <select id="langSelect">
+      <option value="English">🇬🇧 English</option>
+      <option value="Hindi">🇮🇳 Hindi</option>
+      <option value="Hinglish">🔀 Hinglish</option>
+    </select>
+    <select id="vidLen">
+      <option value="short">Short (15 scenes)</option>
+      <option value="medium" selected>Medium (25 scenes)</option>
+      <option value="long">Long (40 scenes)</option>
+    </select>
+  </div>
+
+  <button class="btn btnp" id="genBtn" onclick="generateScript()">✦ Generate Script</button>
+
+  <div class="errbox" id="errBox"></div>
+
+  <!-- SCRIPT OUTPUT -->
+  <div id="scriptOut" style="display:none;">
+    <hr>
+    <div class="row" style="justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:12px;color:#5c5a78;">✎ Tap any field to edit</div>
+      <div class="row" style="gap:7px;">
+        <button class="btn btns btnsm" onclick="regenScript()">↺ Regenerate</button>
+        <button class="btn btng" onclick="approveScript()">✓ Approve →</button>
+      </div>
+    </div>
+    <div id="scenesContainer"></div>
+    <div class="stats">
+      <div class="stat">Scenes: <b id="stScenes">—</b></div>
+      <div class="stat">Words: <b id="stWords">—</b></div>
+      <div class="stat">Est. duration: <b id="stDur">—</b></div>
+      <span id="durWarn" class="warn" style="display:none;">⚠ Some clips exceed 8s</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 2: VOICE ── -->
+<div class="card locked" id="card2">
+  <div class="ch"><div class="ct">② Voice Preview</div><span class="badge bp" id="badge2">Locked</span></div>
+  <div style="font-size:12px;color:#5c5a78;margin-bottom:10px;">Preview how your narration will sound. Only the script text is spoken — no labels or prompts.</div>
+  <div class="row">
+    <div class="row" style="gap:7px;font-size:12px;color:#9b99b8;">Speed
+      <input type="range" id="rateSlider" min="0.7" max="1.3" step="0.05" value="0.9" style="-webkit-appearance:none;width:80px;height:3px;background:#22222f;border-radius:2px;outline:none;cursor:pointer;border:none;padding:0;">
+      <span id="rateVal" style="font-family:monospace;font-size:11px;">0.90x</span>
+    </div>
+    <div class="row" style="gap:7px;font-size:12px;color:#9b99b8;">Pitch
+      <input type="range" id="pitchSlider" min="-2" max="2" step="0.5" value="0" style="-webkit-appearance:none;width:80px;height:3px;background:#22222f;border-radius:2px;outline:none;cursor:pointer;border:none;padding:0;">
+      <span id="pitchVal" style="font-family:monospace;font-size:11px;">0</span>
+    </div>
+    <button class="btn btnp btnsm" onclick="previewVoice()">▶ Preview</button>
+    <button class="btn btns btnsm" onclick="stopVoice()">■ Stop</button>
+  </div>
+  <div class="waveform" id="waveformEl" onclick="previewVoice()" title="Tap to hear">
+  </div>
+  <div style="font-size:11px;color:#5c5a78;text-align:center;margin-top:5px;">🔊 Uses browser text-to-speech — free, no API needed</div>
+  <div class="row mt12">
+    <button class="btn btng" onclick="approveVoice()">✓ Approve Voice & Continue →</button>
+  </div>
+</div>
+
+<!-- ── STEP 3: IMAGE PROMPTS ── -->
+<div class="card locked" id="card3">
+  <div class="ch"><div class="ct">③ Image Prompts</div><span class="badge bp" id="badge3">Locked</span></div>
+  <div style="font-size:12px;color:#5c5a78;margin-bottom:12px;">All image prompts for your video — ready to paste into Wisk AI or Flow app one by one. Each prompt is written in Zenn stick-figure style.</div>
+  <div class="row" style="margin-bottom:12px;">
+    <button class="btn btnp" onclick="copyAllPrompts()">📋 Copy All Prompts</button>
+    <button class="btn btns btnsm" onclick="downloadPrompts()">⬇ Download as .txt</button>
+  </div>
+  <div id="promptsContainer" style="background:#0d0d14;border:1px solid #1a1a24;border-radius:8px;padding:12px;max-height:320px;overflow-y:auto;font-family:monospace;font-size:11px;color:#9b99b8;line-height:1.8;white-space:pre-wrap;"></div>
+  <div class="row mt12">
+    <button class="btn btng" onclick="approvePrompts()">✓ Done — Go to Export →</button>
+  </div>
+</div>
+
+<!-- ── STEP 4: EXPORT ── -->
+<div class="card locked" id="card4">
+  <div class="ch"><div class="ct">④ Export Package</div><span class="badge bp" id="badge4">Locked</span></div>
+  <div style="font-size:12px;color:#5c5a78;margin-bottom:12px;">Download everything you need to assemble your video in any editor.</div>
+
+  <div class="export-box">
+    <div class="export-title">📦 Your Video Package</div>
+    <div class="export-item">
+      <span class="export-icon">📄</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;color:#f0efff;">Narration Script</div>
+        <div>Clean text — paste into ElevenLabs or any TTS tool</div>
+      </div>
+      <button class="btn btns btnsm" onclick="downloadScript()">⬇ Download</button>
+    </div>
+    <div class="export-item">
+      <span class="export-icon">🖼</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;color:#f0efff;">Image Prompts</div>
+        <div>All prompts with scene numbers — paste into Wisk AI</div>
+      </div>
+      <button class="btn btns btnsm" onclick="downloadPrompts()">⬇ Download</button>
+    </div>
+    <div class="export-item">
+      <span class="export-icon">⏱</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;color:#f0efff;">Timeline Guide</div>
+        <div>Which image goes at what timestamp — for your video editor</div>
+      </div>
+      <button class="btn btns btnsm" onclick="downloadTimeline()">⬇ Download</button>
+    </div>
+    <div class="export-item">
+      <span class="export-icon">📦</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;color:#f0efff;">Download Everything</div>
+        <div>All 3 files at once</div>
+      </div>
+      <button class="btn btnp btnsm" onclick="downloadAll()">⬇ Download All</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Something not right? I'll fix it and remember for next time.</div>
+  <textarea id="feedbackInput" rows="2" placeholder="e.g. 'Hook is too slow', 'Scenes too long', 'Need more drama'…"></textarea>
+  <button class="btn btnp mt8" onclick="applyFeedback()">✦ Apply Feedback & Regenerate</button>
+  <div style="font-size:12px;font-weight:600;margin-top:12px;margin-bottom:5px;">🧠 Memory Log</div>
+  <div class="mlog" id="memoryLog"><div style="font-size:12px;color:#5c5a78;">No rules yet.</div></div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+var API_KEY = '';
+var scenes = [];
+var memoryRules = [];
+var voiceUtterance = null;
+var loadingTimer = null;
+var loadingSeconds = 0;
+var apiCallTimeout = null;
+var WORDS_PER_SEC = 2.0;
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.getElementById('rateSlider').oninput = function() {
+  document.getElementById('rateVal').textContent = parseFloat(this.value).toFixed(2) + 'x';
+};
+document.getElementById('pitchSlider').oninput = function() {
+  document.getElementById('pitchVal').textContent = this.value;
+};
+if (window.speechSynthesis) window.speechSynthesis.getVoices();
+
+// ══════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════
+function toast(msg, dur) {
+  var t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if(t.parentNode) t.remove(); }, dur || 3000);
+}
+
+function setStatus(msg, type) {
+  document.getElementById('stext').textContent = msg;
+  var d = document.getElementById('sdot');
+  d.className = 'dot' + (type === 'busy' ? ' busy' : type === 'err' ? ' err' : '');
+}
+
+function unlockCard(n) {
+  var c = document.getElementById('card' + n);
+  c.classList.remove('locked');
+  c.classList.add('active');
+  updatePills(n);
+  setTimeout(function() { c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
+}
+
+function updatePills(n) {
+  for (var i = 1; i <= 4; i++) {
+    var p = document.getElementById('pill' + i);
+    p.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+}
+
+function setBadge(n, state) {
+  var b = document.getElementById('badge' + n);
+  b.className = 'badge ' + (state === 'active' ? 'ba' : state === 'done' ? 'bd' : 'bp');
+  b.textContent = state === 'active' ? 'Active' : state === 'done' ? 'Done ✓' : 'Locked';
+}
+
+function showErr(msg) {
+  var b = document.getElementById('errBox');
+  b.className = 'errbox show';
+  b.innerHTML = '<b>❌ Error:</b> ' + msg +
+    '<br><br><span style="color:#9b99b8;font-size:11px;">Tips: Check your API key is saved correctly · Try "Short" video length · Make sure you have internet</span>';
+}
+
+function hideErr() {
+  document.getElementById('errBox').className = 'errbox';
+}
+
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function calcDur(text, rate) {
+  var words = (text || '').split(/\s+/).filter(Boolean).length;
+  var wps = WORDS_PER_SEC * (rate || 0.9);
+  return Math.max(3, Math.min(8, Math.ceil(words / wps)));
+}
+
+// ══════════════════════════════════════
+// LOADING OVERLAY — with elapsed timer
+// ══════════════════════════════════════
+function showLoading() {
+  loadingSeconds = 0;
+  document.getElementById('ltimer').textContent = '0s elapsed';
+  document.getElementById('ls1').className = 'ls act';
+  document.getElementById('ls2').className = 'ls';
+  document.getElementById('ls3').className = 'ls';
+  document.getElementById('loadingOverlay').className = 'show';
+
+  loadingTimer = setInterval(function() {
+    loadingSeconds++;
+    document.getElementById('ltimer').textContent = loadingSeconds + 's elapsed';
+    if (loadingSeconds === 8) {
+      document.getElementById('ls1').className = 'ls don';
+      document.getElementById('ls2').className = 'ls act';
+    }
+    if (loadingSeconds === 18) {
+      document.getElementById('ls2').className = 'ls don';
+      document.getElementById('ls3').className = 'ls act';
+    }
+    // Auto-cancel after 45 seconds — never hangs forever
+    if (loadingSeconds >= 45) {
+      cancelLoading();
+      showErr('Request timed out after 45 seconds. Check your internet connection and API key, then try again.');
+      setStatus('Timed out', 'err');
+    }
+  }, 1000);
+}
+
+function hideLoading() {
+  clearInterval(loadingTimer);
+  document.getElementById('loadingOverlay').className = '';
+}
+
+function cancelLoading() {
+  hideLoading();
+  if (apiCallTimeout) clearTimeout(apiCallTimeout);
+  // Re-enable button
+  var btn = document.getElementById('genBtn');
+  btn.disabled = false;
+  btn.textContent = '✦ Generate Script';
+  setStatus('Cancelled', 'err');
+}
+
+// ══════════════════════════════════════
+// API KEY
+// ══════════════════════════════════════
+function saveKey() {
+  var k = document.getElementById('apiKey').value.trim();
+  if (!k || k.length < 8) { toast('Please paste your full API key'); return; }
+  API_KEY = k;
+  toast('✓ API key saved!');
+}
+
+// ══════════════════════════════════════
+// STEP 1 — SCRIPT GENERATION
+// ══════════════════════════════════════
+function generateScript() {
+  // Check API key
+  var keyInput = document.getElementById('apiKey').value.trim();
+  if (keyInput.length >= 8) API_KEY = keyInput; // auto-save if typed but not saved
+  if (!API_KEY) { showErr('Please paste your Google AI Studio API key above first.'); return; }
+
+  var topic = document.getElementById('topicInput').value.trim();
+  if (!topic) { toast('Please enter a video topic first'); return; }
+
+  hideErr();
+
+  var vidLen = document.getElementById('vidLen').value;
+  var tone = document.getElementById('toneSelect').value;
+  var lang = document.getElementById('langSelect').value;
+  var counts = { short: 12, medium: 20, long: 35 };
+  var nScenes = counts[vidLen] || 20;
+  var maxWords = 18; // max words per scene at medium speaking pace
+
+  var memCtx = memoryRules.length
+    ? '\n\nSTRICT RULES (from creator feedback — always follow):\n' + memoryRules.map(function(r,i){ return (i+1)+'. '+r; }).join('\n')
+    : '';
+
+  var prompt =
+    'You are a YouTube educational video scriptwriter. Write a Zenn/Kurzgesagt animation style script.\n' +
+    'RETURN ONLY RAW JSON. Start with { end with }. No markdown. No backticks. No extra text.\n' +
+    'Format: {"title":"Video title","scenes":[{"id":1,"type":"hook","label":"Hook","script":"Spoken words only.","imagePrompt":"Stick figure scene description."}]}\n' +
+    'Rules:\n' +
+    '- Exactly ' + nScenes + ' scenes\n' +
+    '- type: hook, setup, main, reveal, bridge, or cta\n' +
+    '- script: ONLY spoken narration. MAX ' + maxWords + ' words per scene. No stage directions.\n' +
+    '- Scene 1-2: shocking hook with curiosity gap\n' +
+    '- Middle: mini cliffhangers every 4-5 scenes\n' +
+    '- Last 2: subscribe CTA + next video teaser\n' +
+    '- imagePrompt: Zenn-style 2D cartoon, stick figures, flat colors, white background\n' +
+    '- Language: ' + lang + '\n' +
+    '- Tone: ' + tone + '\n' +
+    '- Family friendly, educational, no brands, no real people\n' +
+    memCtx +
+    '\nTopic: ' + topic;
+
+  var btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  showLoading();
+  setStatus('Calling Gemini…', 'busy');
+
+  // Direct fetch to Gemini — works from browsers when CORS is allowed by Google
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + API_KEY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.85, maxOutputTokens: 3500 }
+    })
+  })
+  .then(function(res) {
+    if (!res.ok) {
+      return res.json().then(function(e) {
+        throw new Error('API ' + res.status + ': ' + (e.error ? e.error.message : res.statusText));
+      });
+    }
+    return res.json();
+  })
+  .then(function(data) {
+    hideLoading();
+    btn.disabled = false;
+    btn.textContent = '✦ Generate Script';
+
+    if (data.error) throw new Error(data.error.message);
+    if (!data.candidates || !data.candidates[0]) throw new Error('No response. Your quota may be exceeded — wait 1 minute and try again.');
+
+    var raw = data.candidates[0].content.parts[0].text.trim();
+
+    // Aggressive JSON extraction
+    var s = raw.indexOf('{');
+    var e = raw.lastIndexOf('}');
+    if (s === -1 || e === -1) throw new Error('Gemini returned text instead of JSON. Try again.');
+    var clean = raw.slice(s, e + 1);
+
+    var parsed;
+    try { parsed = JSON.parse(clean); }
+    catch(ex) { throw new Error('Could not parse response: ' + ex.message + '. Try again.'); }
+
+    if (!parsed.scenes || !parsed.scenes.length) throw new Error('No scenes found. Try again.');
+
+    var rate = parseFloat(document.getElementById('rateSlider').value) || 0.9;
+    scenes = parsed.scenes;
+    scenes.forEach(function(sc) { sc.duration = calcDur(sc.script, rate); });
+
+    renderScript(parsed);
+    setStatus('Script ready!', '');
+    setBadge(1, 'active');
+    toast('✓ Script generated! Review and edit below.');
+  })
+  .catch(function(err) {
+    hideLoading();
+    btn.disabled = false;
+    btn.textContent = '✦ Generate Script';
+
+    // Handle CORS error specifically
+    var msg = err.message || String(err);
+    if (msg.toLowerCase().indexOf('fetch') !== -1 || msg.toLowerCase().indexOf('cors') !== -1 || msg.toLowerCase().indexOf('failed') !== -1) {
+      showErr(
+        'Network error — could not reach Gemini API.<br><br>' +
+        '🔧 Fix: Open this app through Google Apps Script Web App URL instead of opening the HTML file directly.<br>' +
+        'OR: Open the file in Chrome on a laptop (not phone browser).<br><br>' +
+        'Error detail: ' + msg
+      );
+    } else {
+      showErr(msg);
+    }
+    setStatus('Error', 'err');
+  });
+}
+
+function renderScript(data) {
+  var container = document.getElementById('scenesContainer');
+  container.innerHTML = '';
+  var tagMap = { hook:'t-hook', setup:'t-setup', main:'t-main', reveal:'t-reveal', bridge:'t-bridge', cta:'t-cta' };
+
+  scenes.forEach(function(sc, idx) {
+    var wc = (sc.script || '').split(/\s+/).filter(Boolean).length;
+    var div = document.createElement('div');
+    div.className = 'sblock';
+    div.innerHTML =
+      '<div class="smeta">' +
+        '<span class="snum">SCENE ' + sc.id + '</span>' +
+        '<span class="stag ' + (tagMap[sc.type] || 't-main') + '">' + (sc.label || sc.type) + '</span>' +
+        '<div class="durbadge">⏱<input type="number" value="' + sc.duration + '" min="3" max="8" onchange="setDur(' + idx + ',this.value)">s</div>' +
+        '<span class="wc">' + wc + 'w</span>' +
+      '</div>' +
+      '<textarea class="sscript" rows="2" oninput="editScript(' + idx + ',this)">' + (sc.script || '') + '</textarea>' +
+      '<div class="plabel">🖼 Image prompt:</div>' +
+      '<textarea class="sprompt" rows="2" onchange="scenes[' + idx + '].imagePrompt=this.value">' + (sc.imagePrompt || '') + '</textarea>';
+    container.appendChild(div);
+    div.querySelectorAll('textarea').forEach(function(ta) { autoResize(ta); });
+  });
+
+  document.getElementById('scriptOut').style.display = 'block';
+  updateStats();
+}
+
+function editScript(idx, ta) {
+  autoResize(ta);
+  scenes[idx].script = ta.value;
+  var rate = parseFloat(document.getElementById('rateSlider').value) || 0.9;
+  scenes[idx].duration = calcDur(ta.value, rate);
+  var inp = document.querySelector('#card1 .sblock:nth-child(' + (idx + 1) + ') .durbadge input');
+  if (inp) inp.value = scenes[idx].duration;
+  updateStats();
+}
+
+function setDur(idx, val) {
+  scenes[idx].duration = Math.max(3, Math.min(8, parseInt(val) || 6));
+  updateStats();
+}
+
+function updateStats() {
+  var total = scenes.reduce(function(s, sc) { return s + (sc.duration || 6); }, 0);
+  var words = scenes.reduce(function(s, sc) { return s + (sc.script || '').split(/\s+/).filter(Boolean).length; }, 0);
+  var anyOver = scenes.some(function(sc) { return sc.duration > 8; });
+  var mins = Math.round(total / 60 * 10) / 10;
+  document.getElementById('stScenes').textContent = scenes.length;
+  document.getElementById('stWords').textContent = words;
+  document.getElementById('stDur').textContent = mins + ' min (' + total + 's)';
+  document.getElementById('durWarn').style.display = anyOver ? 'inline' : 'none';
+}
+
+function regenScript() {
+  document.getElementById('scriptOut').style.display = 'none';
+  scenes = [];
+  generateScript();
+}
+
+function approveScript() {
+  setBadge(1, 'done');
+  unlockCard(2);
+  setBadge(2, 'active');
+  buildWaveform();
+  toast('✓ Script approved! Preview your voice.');
+}
+
+// ══════════════════════════════════════
+// STEP 2 — VOICE PREVIEW
+// ══════════════════════════════════════
+function buildWaveform() {
+  var wf = document.getElementById('waveformEl');
+  wf.innerHTML = '';
+  for (var i = 0; i < 50; i++) {
+    var b = document.createElement('div');
+    b.className = 'wbar';
+    b.style.height = (Math.random() * 20 + 5) + 'px';
+    b.style.animationDelay = (Math.random() * 1.1) + 's';
+    wf.appendChild(b);
+  }
+}
+
+function previewVoice() {
+  if (!scenes.length) { toast('Generate a script first'); return; }
+  if (!window.speechSynthesis) { toast('Browser TTS not supported'); return; }
+  stopVoice();
+  var text = scenes.map(function(sc) { return sc.script || ''; }).join(' ');
+  voiceUtterance = new SpeechSynthesisUtterance(text);
+  voiceUtterance.rate = parseFloat(document.getElementById('rateSlider').value) || 0.9;
+  voiceUtterance.pitch = 1 + parseFloat(document.getElementById('pitchSlider').value) * 0.08;
+  var voices = window.speechSynthesis.getVoices();
+  var v = voices.find(function(v) { return v.lang.indexOf('en') === 0; }) || voices[0];
+  if (v) voiceUtterance.voice = v;
+  var wf = document.getElementById('waveformEl');
+  voiceUtterance.onstart = function() {
+    wf.querySelectorAll('.wbar').forEach(function(b) { b.classList.add('playing'); b.style.opacity = '1'; });
+  };
+  voiceUtterance.onend = function() {
+    wf.querySelectorAll('.wbar').forEach(function(b) { b.classList.remove('playing'); b.style.opacity = '.45'; });
+  };
+  window.speechSynthesis.speak(voiceUtterance);
+}
+
+function stopVoice() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  var wf = document.getElementById('waveformEl');
+  wf.querySelectorAll('.wbar').forEach(function(b) { b.classList.remove('playing'); b.style.opacity = '.45'; });
+}
+
+function approveVoice() {
+  stopVoice();
+  setBadge(2, 'done');
+  unlockCard(3);
+  setBadge(3, 'active');
+  buildPrompts();
+  toast('✓ Voice approved! Here are your image prompts.');
+}
+
+// ══════════════════════════════════════
+// STEP 3 — IMAGE PROMPTS
+// ══════════════════════════════════════
+function buildPrompts() {
+  var lines = [];
+  var totalTime = 0;
+  scenes.forEach(function(sc, i) {
+    var startMin = Math.floor(totalTime / 60);
+    var startSec = totalTime % 60;
+    var endTime = totalTime + sc.duration;
+    var endMin = Math.floor(endTime / 60);
+    var endSec = endTime % 60;
+    var timeStr = startMin + ':' + (startSec < 10 ? '0' : '') + startSec +
+                  ' → ' + endMin + ':' + (endSec < 10 ? '0' : '') + endSec;
+    lines.push('IMG ' + String(i + 1).padStart(3, '0') + ' | ' + timeStr + ' | ' + sc.duration + 's');
+    lines.push(
+      '2D hand-drawn cartoon. Stick figures, circle heads, thick black outlines, flat colors, white background, no gradients. ' +
+      (sc.imagePrompt || 'Scene illustrating: ' + sc.script.substring(0, 60) + '...')
+    );
+    lines.push('');
+    totalTime = endTime;
+  });
+  document.getElementById('promptsContainer').textContent = lines.join('\n');
+}
+
+function copyAllPrompts() {
+  var text = document.getElementById('promptsContainer').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() { toast('✓ All prompts copied!'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    ta.remove(); toast('✓ Copied!');
+  }
+}
+
+function downloadPrompts() {
+  var text = document.getElementById('promptsContainer').textContent;
+  if (!text) { toast('Generate a script first'); return; }
+  downloadFile('image-prompts.txt', text);
+}
+
+function approvePrompts() {
+  setBadge(3, 'done');
+  unlockCard(4);
+  setBadge(4, 'done');
+  toast('✓ All done! Download your files below.');
+}
+
+// ══════════════════════════════════════
+// STEP 4 — EXPORT
+// ══════════════════════════════════════
+function buildNarrationText() {
+  return scenes.map(function(sc) { return sc.script || ''; }).join('\n\n');
+}
+
+function buildTimelineText() {
+  var lines = ['TIMELINE — ' + (scenes[0] ? 'Video Script' : '') + '\n'];
+  var totalTime = 0;
+  scenes.forEach(function(sc, i) {
+    var startMin = Math.floor(totalTime / 60);
+    var startSec = totalTime % 60;
+    var endTime = totalTime + sc.duration;
+    var endMin = Math.floor(endTime / 60);
+    var endSec = endTime % 60;
+    var fname = startMin + 'm' + (startSec < 10 ? '0' : '') + startSec + 's';
+    lines.push(
+      'IMG ' + String(i + 1).padStart(3, '0') + ' | ' +
+      startMin + ':' + (startSec < 10 ? '0' : '') + startSec +
+      ' → ' +
+      endMin + ':' + (endSec < 10 ? '0' : '') + endSec +
+      ' | ' + sc.duration + 's | filename: ' + fname + '.png | ' + (sc.label || sc.type)
+    );
+    totalTime = endTime;
+  });
+  return lines.join('\n');
+}
+
+function downloadScript() {
+  if (!scenes.length) { toast('No script yet'); return; }
+  downloadFile('narration-script.txt', buildNarrationText());
+  toast('⬇ Narration script downloaded');
+}
+
+function downloadTimeline() {
+  if (!scenes.length) { toast('No script yet'); return; }
+  downloadFile('timeline.txt', buildTimelineText());
+  toast('⬇ Timeline downloaded');
+}
+
+function downloadAll() {
+  if (!scenes.length) { toast('No script yet'); return; }
+  downloadFile('narration-script.txt', buildNarrationText());
+  setTimeout(function() {
+    downloadFile('image-prompts.txt', document.getElementById('promptsContainer').textContent || buildPromptsText());
+  }, 400);
+  setTimeout(function() {
+    downloadFile('timeline.txt', buildTimelineText());
+  }, 800);
+  toast('⬇ Downloading 3 files…');
+}
+
+function buildPromptsText() {
+  var lines = [];
+  var totalTime = 0;
+  scenes.forEach(function(sc, i) {
+    var startMin = Math.floor(totalTime / 60);
+    var startSec = totalTime % 60;
+    var endTime = totalTime + sc.duration;
+    var endMin = Math.floor(endTime / 60);
+    var endSec = endTime % 60;
+    lines.push('IMG ' + String(i+1).padStart(3,'0') + ' | ' + startMin + ':' + (startSec<10?'0':'') + startSec + ' → ' + endMin + ':' + (endSec<10?'0':'') + endSec + ' | ' + sc.duration + 's');
+    lines.push('2D hand-drawn cartoon. Stick figures, circle heads, thick black outlines, flat colors, white background, no gradients. ' + (sc.imagePrompt || sc.script.substring(0,80)));
+    lines.push('');
+    totalTime = endTime;
+  });
+  return lines.join('\n');
+}
+
+function downloadFile(name, content) {
+  var a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+// ══════════════════════════════════════
+// FEEDBACK / MEMORY
+// ══════════════════════════════════════
+function applyFeedback() {
+  var fb = document.getElementById('feedbackInput').value.trim();
+  if (!fb) { toast('Please describe what to fix'); return; }
+  memoryRules.push(fb);
+  updateMemoryLog();
+  document.getElementById('feedbackInput').value = '';
+  toast('✓ Rule saved! Regenerating…');
+  setTimeout(function() {
+    document.getElementById('scriptOut').style.display = 'none';
+    scenes = [];
+    generateScript();
+  }, 800);
+}
+
+function updateMemoryLog() {
+  var log = document.getElementById('memoryLog');
+  if (!memoryRules.length) { log.innerHTML = '<div style="font-size:12px;color:#5c5a78;">No rules yet.</div>'; return; }
+  log.innerHTML = memoryRules.map(function(r) { return '<div class="mitem"><span>🧠</span><span>' + r + '</span></div>'; }).join('');
+}
+</script>
+</body>
+</html>
