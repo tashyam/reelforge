@@ -203,9 +203,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
       <option value="Hinglish">🔀 Hinglish</option>
     </select>
     <select id="vidLen" onchange="autoSaveSettings()">
-      <option value="short">Short (28 scenes ~3 min)</option>
-      <option value="medium" selected>Medium (60 scenes ~8 min)</option>
-      <option value="long">Long (110 scenes ~14 min) — batched</option>
+      <option value="short">Short (40 scenes ~3 min)</option>
+      <option value="medium" selected>Medium (80 scenes ~8 min)</option>
+      <option value="long">Long (150 scenes ~14 min) — batched</option>
     </select>
   </div>
 
@@ -364,7 +364,7 @@ var WORDS_PER_SEC = 2.3;
 var isCancelled = false;
 
 // Video length -> scene counts (more scenes = more image changes = better engagement)
-var SCENE_COUNTS = { short: 28, medium: 60, long: 110 };
+var SCENE_COUNTS = { short: 40, medium: 80, long: 150 };
 // Scenes per API call batch (20 is safe limit to avoid timeouts)
 var BATCH_SIZE = 20;
 
@@ -528,7 +528,7 @@ function setBatchInfo(cur, total){ document.getElementById('lbatch').style.displ
 // GEMINI API CALL (single batch)
 // ══════════════════════════════════════════
 function callGemini(prompt) {
-  return fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+API_KEY, {
+  return fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+API_KEY, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
