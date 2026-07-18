@@ -562,4 +562,243 @@ function executeStep3ImagePromptsSegmentation() {
       var rawString = rawJsonData.candidates[0].content.parts[0].text.trim();
       
       if (rawString.startsWith("```")) {
-        rawString = rawString.replace(/^
+        rawString = rawString.replace(/^```(?:json)?/, "").replace(/```$/, "").trim();
+      }
+      
+      var cleanStart = rawString.indexOf('[');
+      var cleanEnd = rawString.lastIndexOf(']');
+      if(cleanStart === -1 || cleanEnd === -1) {
+        cleanStart = rawString.indexOf('{');
+        cleanEnd = rawString.lastIndexOf('}');
+        if (cleanStart === -1) throw new Error("JSON matrix conversion execution error matching output structure filters.");
+      }
+      
+      var parsedBatchArray = JSON.parse(rawString.slice(cleanStart, cleanEnd + 1));
+      if (!Array.isArray(parsedBatchArray) && parsedBatchArray.scenes) parsedBatchArray = parsedBatchArray.scenes;
+      if (!Array.isArray(parsedBatchArray)) parsedBatchArray = [parsedBatchArray];
+      
+      parsedBatchArray.forEach(function(sc, idx){
+        sc.id = startingSceneId + idx;
+        accumulatedScenes.push(sc);
+      });
+
+      scenes = accumulatedScenes;
+      saveGlobalStateTrack();
+
+      if(accumulatedScenes.length < targetSceneCount && activeBatchIndex < totalBatchesNeeded) {
+        setTimeout(runLinearBatchLoop, 1200);
+      } else {
+        hideLoaderOverlay();
+        
+        scenes.forEach(function(s){ s.duration = Math.max(MIN_DUR, Math.min(MAX_DUR, Math.ceil((s.script||'').split(/\s+/).filter(Boolean).length / WORDS_PER_SEC))); });
+        for(var i = 1; i < scenes.length; i++) {
+          if(scenes[i].scene_key && scenes[i].scene_key === scenes[i-1].scene_key) scenes[i].isHoldFrame = true;
+        }
+
+        renderScriptVisualLayoutGrid();
+        saveGlobalStateTrack();
+        
+        setStatusIndicator('Step 3 Configuration Ready','');
+        advanceLinearStep(4);
+      }
+    })
+    .catch(function(err){
+      hideLoaderOverlay();
+      setStatusIndicator('Step 3 Execution Interrupt','err');
+      alert('Visual parsing compilation dynamic sequence break down event: ' + err.message);
+    });
+  }
+
+  runLinearBatchLoop();
+}
+
+function renderScriptVisualLayoutGrid() {
+  var container = document.getElementById('scenesContainer');
+  container.innerHTML = '';
+  var labelClasses = {hook:'t-hook',main:'t-main'};
+
+  scenes.forEach(function(sc, idx){
+    var div = document.createElement('div');
+    div.className = 'sblock';
+    var holdBadgeText = sc.isHoldFrame ? '<span class="hold-badge">🎬 HOLD FRAME — Shift Animation Expression Only</span>' : '';
+    
+    div.innerHTML = `
+      <div class="smeta">
+        <span class="snum">Beat #${sc.id}</span>
+        <span class="stag ${labelClasses[sc.type] || 't-main'}">${sc.type.toUpperCase()}</span>
+        ${holdBadgeText}
+        <div class="durbadge">⏱<input type="number" value="${sc.duration}" step="0.5" onchange="modifySceneTimeValueManual(${idx}, this.value)">s</div>
+      </div>
+      <div style="font-size:13px; color:#fff; margin-bottom:6px; background:#0d0d14; padding:6px; border-radius:4px;">${sc.script}</div>
+      <textarea class="sprompt" rows="2" onchange="scenes[${idx}].imagePrompt=this.value;saveGlobalStateTrack();">${sc.imagePrompt || ''}</textarea>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function modifySceneTimeValueManual(idx, val) {
+  scenes[idx].duration = Math.max(MIN_DUR, Math.min(MAX_DUR, parseFloat(val) || TARGET_AVG_DUR));
+  saveGlobalStateTrack();
+}
+
+function copyCharacterReferenceSeed() {
+  navigator.clipboard.writeText(localStorage.getItem('rf_char_anchor') || '');
+  toastNotification('Character model asset seed copied.');
+}
+function copyAllVisualPromptsStackText() {
+  var promptArrayText = scenes.map(function(s, i){ return "ASSET PROMPT #" + (i+1) + "\n" + s.imagePrompt; }).join("\n\n");
+  navigator.clipboard.writeText(promptArrayText);
+  toastNotification('Visual graphic prompt stack synced to clipboard.');
+}
+function downloadVisualPromptStackTextFile() {
+  var promptArrayText = scenes.map(function(s, i){ return "ASSET PROMPT #" + (i+1) + "\n" + s.imagePrompt; }).join("\n\n");
+  downloadFileElement('visual-prompts-stack.txt', promptArrayText);
+}
+
+// STEP 4 PIPELINE OPERATION: TIMELINES MANIFEST BUILDER
+function executeStep4TimelineCompilation() {
+  reconstructTimelineTextString();
+  advanceLinearStep(5);
+}
+
+function reconstructTimelineTextString() {
+  var timelineLines = ["REELFORGE STUDIOS TIMELINE MATRIX Blueprints\n"];
+  var currentAccumulator = 0;
+  scenes.forEach(function(sc, idx){
+    var startMin = Math.floor(currentAccumulator / 60);
+    var startSec = Math.floor(currentAccumulator % 60);
+    currentAccumulator += sc.duration;
+    var endMin = Math.floor(currentAccumulator / 60);
+    var endSec = Math.floor(currentAccumulator % 60);
+
+    var matrixHeader = "IMG TRACK asset " + String(idx+1).padStart(3,'0') + " | Mapped Time: " + 
+                     startMin + ":" + String(startSec).padStart(2,'0') + " → " + 
+                     endMin + ":" + String(endSec).padStart(2,'0') + " (" + sc.duration + "s) | Action Beat: " + sc.script;
+    timelineLines.push(matrixHeader);
+  });
+  
+  var finishedTimelineText = timelineLines.join('\n');
+  document.getElementById('timelineManifestOutputContainer').textContent = finishedTimelineText;
+  localStorage.setItem('rf_timeline_manifest', finishedTimelineText);
+}
+
+function copyTimelineManifestTextToClipboard() {
+  navigator.clipboard.writeText(document.getElementById('timelineManifestOutputContainer').textContent);
+  toastNotification('Timeline structural maps synchronization vector verified.');
+}
+function downloadTimelineManifestFileText() {
+  downloadFileElement('video-editor-timeline-manifest.txt', document.getElementById('timelineManifestOutputContainer').textContent);
+}
+
+// STEP 5 PIPELINE OPERATION: SEO METADATA PACKAGE INJECTION PIPELINE
+function executeStep5SEOOptimizationPipeline() {
+  showLoaderOverlay('Executing Step 5: Processing SEO Optimization Payload', 'Assembling optimized distribution titles, metrics context arrays, and semantic indexing tags...');
+  setStatusIndicator('Compiling High-CTR Packaging...','busy');
+
+  var seoOptimizationPrompt = "You are a conversion marketing optimization engineer managing search visibility frameworks. " +
+    "Analyze the following script text:\n\n\"" + continuousText + "\"\n\n" +
+    "Provide exactly 3 conversion title layouts limited strictly to under 70 characters following curiosity gaps and stakes parameters. " +
+    "Propose a deep structural descriptions layout summarizing video index vectors, placeholders for time-stamping, and engagement metrics tracking. " +
+    "Propose a block of 30 specialized semantic optimization search tags separated exactly by commas.\n\n" +
+    "Explicitly place clean text structural segment markings for labels: TITLES, DESCRIPTION, and TAGS. Do not map code wraps.";
+
+  executeNetworkApiCallPayload(seoOptimizationPrompt)
+  .then(function(data){
+    hideLoaderOverlay();
+    var outputText = data.candidates[0].content.parts[0].text;
+    
+    var titlesSegment = outputText.slice(0, outputText.indexOf('DESCRIPTION')) || outputText;
+    var descriptionSegment = outputText.slice(outputText.indexOf('DESCRIPTION'), outputText.indexOf('TAGS')) || '';
+    var tagsSegment = outputText.slice(outputText.indexOf('TAGS')) || '';
+
+    document.getElementById('metaTitles').textContent = titlesSegment;
+    document.getElementById('metaDesc').textContent = descriptionSegment;
+    document.getElementById('metaTags').textContent = tagsSegment;
+
+    localStorage.setItem('rf_meta_titles', titlesSegment);
+    localStorage.setItem('rf_meta_desc', descriptionSegment);
+    localStorage.setItem('rf_meta_tags', tagsSegment);
+
+    setStatusIndicator('Step 5 Stable','');
+    saveGlobalStateTrack();
+    advanceLinearStep(6);
+  })
+  .catch(function(err){
+    hideLoaderOverlay();
+    setStatusIndicator('Step 5 Fault Error','err');
+  });
+}
+
+// STEP 6 PIPELINE OPERATION: PSYCHOLOGICAL THUMBNAIL CONCEPTS COMPILER
+function executeStep6ThumbnailStrategyPipeline() {
+  showLoaderOverlay('Executing Step 6: Processing Thumbnail Visual Psychology', 'Compiling clickable visual blue prints tracking color psychology metrics and focus distribution fields...');
+  setStatusIndicator('Compiling Thumbnail Strategy...','busy');
+
+  var thumbnailStrategyPrompt = "You are an expert digital graphics art director analyzing content conversion architecture. " +
+    "Read this operational script track narration block:\n\n\"" + continuousText + "\"\n\n" +
+    "Develop 4 distinct, completely defined conceptual visual thumbnail concept variations. Apply absolute color psychology parameters, clear isolated central hero focus anchors, and absolute constraints on text layouts (strictly 2-4 words maximum).\n" +
+    "Map your concepts explicitly across combinations of verified conversion formats: Whiteboard Diagrams, Prime Text arrangements, UI Mockup Frames, Transformation splits, or Surrounded Hero settings.\n\n" +
+    "For every concept, explicitly structure these labels block elements: Concept name, Visual composition, Text, Colors/font, and Why it works.";
+
+  executeNetworkApiCallPayload(thumbnailStrategyPrompt)
+  .then(function(data){
+    hideLoaderOverlay();
+    var thumbStrategyText = data.candidates[0].content.parts[0].text.trim();
+    
+    document.getElementById('thumbnailStrategyOutputContainer').textContent = thumbStrategyText;
+    localStorage.setItem('rf_thumb_strategy', thumbStrategyText);
+    
+    setStatusIndicator('Step 6 Stable Workflow Complete','');
+    saveGlobalStateTrack();
+    advanceLinearStep(7);
+  })
+  .catch(function(err){
+    hideLoaderOverlay();
+    setStatusIndicator('Step 6 Fault Interrupt','err');
+  });
+}
+
+function downloadFileElement(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
+function triggerRegenerateRestart() {
+  if(!confirm('Save current pipeline tracking arrays data metrics and purge state history to restart for a fresh configuration topic?')) return;
+  localStorage.clear();
+  location.reload();
+}
+
+function previewVoiceEngineSimulation() {
+  if(!continuousText || !window.speechSynthesis) return;
+  stopVoiceEngineSimulation();
+  voiceUtterance = new SpeechSynthesisUtterance(continuousText);
+  voiceUtterance.rate = parseFloat(document.getElementById('rateSlider').value) || 0.95;
+  var bars = document.getElementById('waveformEl').querySelectorAll('.wbar');
+  voiceUtterance.onstart = function(){ bars.forEach(function(b){ b.classList.add('playing'); b.style.opacity = '1'; })}
+  voiceUtterance.onend = function(){ bars.forEach(function(b){ b.classList.remove('playing'); b.style.opacity = '0.4'; })}
+  window.speechSynthesis.speak(voiceUtterance);
+}
+function stopVoiceEngineSimulation() {
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  var bars = document.getElementById('waveformEl').querySelectorAll('.wbar');
+  bars.forEach(function(b){ b.classList.remove('playing'); b.style.opacity = '0.4'; });
+}
+
+(function generateVisualWaveforms() {
+  var wf = document.getElementById('waveformEl'); wf.innerHTML = '';
+  for(var i=0; i<65; i++) {
+    var b = document.createElement('div'); b.className = 'wbar';
+    b.style.height = (Math.random() * 20 + 4) + 'px';
+    b.style.animationDelay = (Math.random() * 1.1) + 's';
+    wf.appendChild(b);
+  }
+})();
+</script>
+</body>
+</html>
