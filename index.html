@@ -1,9 +1,9 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReelForge Pro v3.6</title>
+<title>ReelForge Studio Pro v4.0</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0a0a0f;color:#f0efff;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
@@ -17,23 +17,22 @@ body{background:#0a0a0f;color:#f0efff;font-family:Arial,sans-serif;font-size:14p
 .saved-badge{font-size:10px;color:#4ade80;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);border-radius:10px;padding:2px 8px;display:none;}
 .main{max-width:920px;margin:0 auto;padding:20px 14px 80px;}
 
-/* PIPELINE PILLS */
+/* LINEAR PIPELINE INDICATION STEPS */
 .pipeline{display:flex;align-items:center;gap:3px;margin-bottom:20px;overflow-x:auto;padding-bottom:2px;}
 .step{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;color:#5c5a78;border:1px solid transparent;}
 .step.active{background:rgba(74,222,128,.15);border-color:#4ade80;color:#a8fdc2;}
-.step.done{color:#4ade80;}
+.step.done{color:#4ade80;font-weight:700;}
 .arr{color:#3a3a50;font-size:13px;padding:0 1px;}
 
-/* CARDS BUILDER */
-.card{background:#111118;border:1px solid #1e1e2a;border-radius:12px;padding:18px;margin-bottom:14px;}
-.card.locked{opacity:.35;pointer-events:none;}
-.card.open{border-color:#2a2a3a;}
+/* LINEAR WORKFLOW CARDS */
+.card{background:#111118;border:1px solid #1e1e2a;border-radius:12px;padding:18px;margin-bottom:14px;display:none;}
+.card.visible{display:block;}
 .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .ct{font-size:15px;font-weight:700;}
 .badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:20px;}
-.bp{background:#1e1e2a;color:#5c5a78;}.ba{background:rgba(74,222,128,.15);color:#4ade80;}.bd{background:rgba(74,222,128,.1);color:#4ade80;}
+.ba{background:rgba(74,222,128,.15);color:#4ade80;}
 
-/* DEEPER INPUT CONTROLS */
+/* CONTROLS */
 textarea,select,input[type=number],input[type=text],input[type=password]{
   background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;
   color:#f0efff;font-family:Arial,sans-serif;font-size:13px;padding:9px 12px;outline:none;width:100%;}
@@ -42,7 +41,7 @@ textarea:focus,select:focus,input:focus{border-color:#4ade80;}
 select{width:auto;cursor:pointer;padding:7px 10px;}
 textarea::placeholder,input::placeholder{color:#5c5a78;}
 
-/* ACTION BUTTONS */
+/* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;white-space:nowrap;font-family:Arial,sans-serif;}
 .btnp{background:#4ade80;color:#0a0a0f;}.btnp:hover{background:#3ec26f;}
 .btnp:disabled{opacity:.35;cursor:not-allowed;}
@@ -53,415 +52,319 @@ textarea::placeholder,input::placeholder{color:#5c5a78;}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .mt8{margin-top:8px;}.mt12{margin-top:12px;}.mt16{margin-top:16px;}
 
-/* TWO-PHASE BLOCK */
-.phase-box{background:#161622;border:1px solid #2b2b3d;border-radius:10px;padding:14px;margin-bottom:12px;}
-.phase-title{font-size:12px;color:#4ade80;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
-
-/* MODEL CONVERSION FLOW INFOBAR */
-.model-alert-box{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:8px;padding:12px;margin-bottom:14px;display:none;}
-.model-alert-title{font-size:12px;color:#fbbf24;font-weight:700;margin-bottom:4px;}
-
-/* OVERLAY SPIN ENGINE */
-#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.95);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(4px);}
-#loadingOverlay.show{display:flex;}
-.spinner{width:44px;height:44px;border:3px solid #1e1e2a;border-top-color:#4ade80;border-radius:50%;animation:spin .8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.ltitle{font-size:17px;color:#4ade80;font-weight:700;text-align:center;}
-.lsub{font-size:12px;color:#5c5a78;text-align:center;max-width:280px;line-height:1.7;}
-.ltimer{font-size:22px;color:#fbbf24;font-family:monospace;font-weight:700;}
-.lbatch{font-size:11px;color:#9b99b8;font-family:monospace;background:#1a1a24;border:1px solid #2a2a3a;border-radius:6px;padding:5px 12px;text-align:center;}
-
-.errbox{display:none;margin-top:10px;padding:12px 14px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);border-radius:10px;font-size:12px;color:#f87171;line-height:1.8;}
-.errbox.show{display:block;}
-
-/* NARRATION FIELD CONTAINER */
-.script-panel{background:#0d0d14;border:1px solid #1e1e2a;border-radius:10px;padding:14px;margin-top:12px;}
-.script-panel-title{font-size:12px;color:#5c5a78;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.narration-box{width:100%;min-height:120px;background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;padding:10px 12px;font-size:13px;color:#f0efff;font-family:Arial,sans-serif;line-height:1.7;}
-
-/* SEGMENTED VISUAL SCENE BLOCKS */
+/* LOG BLOCKS */
 .sblock{background:#1a1a24;border:1px solid #222;border-radius:10px;padding:11px;margin-bottom:7px;}
 .smeta{display:flex;align-items:center;gap:7px;margin-bottom:6px;flex-wrap:wrap;}
 .snum{font-size:10px;color:#5c5a78;font-family:monospace;}
 .stag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:4px;}
 .t-hook{background:rgba(251,191,36,.12);color:#fbbf24;}
-.t-setup,.t-main{background:rgba(96,165,250,.1);color:#60a5fa;}
-.t-reveal{background:rgba(167,139,250,.12);color:#c4b5fd;}
-.t-bridge{background:rgba(248,113,113,.1);color:#f87171;}
-.t-cta{background:rgba(74,222,128,.1);color:#4ade80;}
-
-.hold-badge{background:rgba(74,222,128,.15);color:#4ade80;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;border:1px dashed #4ade80;}
+.t-main{background:rgba(96,165,250,.1);color:#60a5fa;}
 .durbadge{display:flex;align-items:center;gap:3px;font-size:10px;color:#4ade80;background:#22222f;border:1px solid #2a2a3a;border-radius:4px;padding:2px 6px;font-family:monospace;}
-.durbadge input{width:22px;background:transparent;border:none;outline:none;color:#4ade80;font-family:monospace;font-size:10px;padding:0;text-align:center;}
+.durbadge input{width:24px;background:transparent;border:none;outline:none;color:#4ade80;font-family:monospace;font-size:10px;text-align:center;}
 .wc{font-size:10px;color:#5c5a78;font-family:monospace;margin-left:auto;}
-.sscript{min-height:36px;margin-bottom:6px;font-size:13px;}
-.sprompt{font-size:11px;color:#9b99b8;font-family:monospace;min-height:45px;background:#0d0d14;}
 
-/* PREVIEW WAVEFORM MECHANISMS */
+/* WAVEFORM SOUND ENGINE SIMULATOR */
 .waveform{height:36px;background:#1a1a24;border:1px solid #222;border-radius:8px;display:flex;align-items:center;gap:2px;padding:5px 10px;cursor:pointer;overflow:hidden;margin-top:8px;}
 .wbar{width:3px;background:#4ade80;border-radius:2px;opacity:.4;}
 .wbar.playing{animation:wav 1.1s ease-in-out infinite;}
 @keyframes wav{0%,100%{height:4px;opacity:.3;}50%{height:22px;opacity:1;}}
 
-.mlog{background:#1a1a24;border:1px solid #222;border-radius:8px;padding:10px 12px;margin-top:8px;max-height:160px;overflow-y:auto;}
-.mitem{font-size:12px;color:#9b99b8;padding:4px 0;border-bottom:1px solid #1e1e2a;display:flex;gap:7px;align-items:flex-start;}
-.mitem:last-child{border-bottom:none;}
-.mdel{background:none;border:none;color:#5c5a78;cursor:pointer;font-size:11px;margin-left:auto;}
-.mdel:hover{color:#f87171;}
+/* LOADING OVERLAYS */
+#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.95);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(4px);}
+#loadingOverlay.show{display:flex;}
+.spinner{width:44px;height:44px;border:3px solid #1e1e2a;border-top-color:#4ade80;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ltitle{font-size:17px;color:#4ade80;font-weight:700;text-align:center;}
+.lsub{font-size:12px;color:#5c5a78;text-align:center;max-width:280px;}
+.ltimer{font-size:22px;color:#fbbf24;font-family:monospace;font-weight:700;}
 
-.stats{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
-.stat{font-size:12px;color:#9b99b8;}.stat b{color:#4ade80;}
-.warn{color:#f87171;font-size:11px;}
-.batch-prog{background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;padding:10px 12px;margin-top:10px;display:none;}
-.bp-bar-wrap{background:#0d0d14;border-radius:4px;height:6px;overflow:hidden;margin-top:6px;}
-.bp-bar{height:100%;background:linear-gradient(90deg,#4ade80,#a8fdc2);border-radius:4px;transition:width .4s;}
-.bp-text{font-size:11px;color:#9b99b8;margin-top:4px;font-family:monospace;}
-
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1a1a24;border:1px solid #2a2a3a;color:#f0efff;padding:9px 18px;border-radius:20px;font-size:13px;z-index:2000;animation:tin .25s ease;white-space:nowrap;pointer-events:none;}
-@keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.errbox{display:none;margin-top:10px;padding:12px 14px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);border-radius:10px;font-size:12px;color:#f87171;}
+.errbox.show{display:block;}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1a1a24;border:1px solid #2a2a3a;color:#f0efff;padding:9px 18px;border-radius:20px;font-size:13px;z-index:2000;white-space:nowrap;}
 hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
-input[type=range]{-webkit-appearance:none;width:80px;height:3px;background:#22222f;border-radius:2px;outline:none;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#4ade80;}
+.display-block-box{background:#0d0d14;padding:12px;border-radius:8px;font-family:monospace;font-size:12px;white-space:pre-wrap;color:#f0efff;border:1px solid #2a2a3a;line-height:1.7;}
 </style>
 </head>
 <body>
 
-<!-- COMPREHENSIVE ENGINE SYSTEM OVERLAY -->
 <div id="loadingOverlay">
   <div class="spinner"></div>
-  <div class="ltitle" id="ltitle">Generating Content Architecture…</div>
+  <div class="ltitle" id="ltitle">Executing Linear Pipeline...</div>
   <div class="ltimer" id="ltimer">0s</div>
-  <div class="lbatch" id="lbatch" style="display:none;">Batch 1 of 1</div>
-  <div style="font-size:10px;color:#5c5a78;text-align:center;max-width:280px;">Phase 1: Compiling high-retention narration block. Phase 2: Generating visual scripts. State auto-saved at intervals.</div>
-  <div class="lsub" id="lsub">Processing context structures...</div>
-  <button class="btn btns btnsm" onclick="cancelLoad()" style="margin-top:8px;">✕ Stop Generation</button>
+  <div class="lsub" id="lsub">Assembling contextual parameters from target model configurations...</div>
+  <button class="btn btns btnsm" onclick="cancelLoad()" style="margin-top:8px;">✕ Cancel Execution</button>
 </div>
 
 <div class="topbar">
-  <div class="logo">Reel<span>Forge</span><small>Pro v3.6</small></div>
+  <div class="logo">Reel<span>Forge</span><small>Linear Studio v4.0</small></div>
   <div class="srow">
     <span class="dot" id="sdot"></span>
     <span id="stext">System Ready</span>
-    <span class="saved-badge" id="savedBadge">💾 State Auto-Saved</span>
-    <button class="btn btns btnsm" onclick="clearAll()" style="font-size:10px;padding:3px 8px;">🗑</button>
+    <span class="saved-badge" id="savedBadge">💾 Progress Saved Automatically</span>
   </div>
 </div>
 
 <div class="main">
 
-<!-- CONVERSION WARNING AND RESOLUTION INFOBAR -->
-<div class="model-alert-box" id="modelAlertBox">
-  <div class="model-alert-title">🔄 Engine Model Configuration Altered</div>
-  <div style="font-size:12px;color:#9b99b8;margin-bottom:8px;">You changed your AI engine routing configurations. Your architectural generation state has been preserved automatically. Select execution route:</div>
-  <div class="row">
-    <button class="btn btnp btnsm" onclick="handleModelChangeDecision('continue')">Continue Current Script</button>
-    <button class="btn btns btnsm" onclick="handleModelChangeDecision('new_script')">Generate New Script Only</button>
-    <button class="btn btns btnsm" onclick="handleModelChangeDecision('new_prompts')">Re-Segment Image Prompts Only</button>
-  </div>
-</div>
-
-<div class="pipeline">
-  <div class="step active" id="pill1">① Script Engine</div><div class="arr">›</div>
-  <div class="step" id="pill2">② Image Strategy</div><div class="arr">›</div>
-  <div class="step" id="pill3">③ Export Options</div><div class="arr">›</div>
-  <div class="step" id="pill4">④ High-CTR Metadata</div>
-</div>
-
-<!-- PHASE STEP 1 CARD -->
-<div class="card open" id="card1">
-  <div class="ch">
-    <div class="ct">① Dual-Phase Script Architecture</div>
-    <span class="badge ba" id="badge1">Active</span>
+  <!-- LINEAR STEP DISPLAY PIPELINE METRIC -->
+  <div class="pipeline">
+    <div class="step active" id="pill1">① Configuration Setup</div><div class="arr">›</div>
+    <div class="step" id="pill2">② Script Flow</div><div class="arr">›</div>
+    <div class="step" id="pill3">③ Audio Track Export</div><div class="arr">›</div>
+    <div class="step" id="pill4">④ Image Prompts</div><div class="arr">›</div>
+    <div class="step" id="pill5">⑤ Structural Timelines</div><div class="arr">›</div>
+    <div class="step" id="pill6">⑥ SEO Optimizations</div><div class="arr">›</div>
+    <div class="step" id="pill7">⑦ Thumbnail Psychological Strategy</div>
   </div>
 
-  <div class="row" style="margin-bottom:12px;gap:8px;">
-    <div style="flex:2; min-width:200px;">
-      <div style="font-size:11px;color:#5c5a78;margin-bottom:4px;">Google AI Studio API Key</div>
-      <input type="password" id="apiKey" placeholder="AIzaSy... Paste studio developer key here" oninput="autoSaveKey(this.value)">
+  <!-- STEP 1 CARD: CONFIGURATION INITIALIZATION SETUP -->
+  <div class="card visible" id="card1">
+    <div class="ch"><div class="ct">Step 1: Core System Configuration Setup</div><span class="badge ba">Setup Stage</span></div>
+    <div class="row" style="margin-bottom:12px;gap:8px;">
+      <div style="flex:2; min-width:200px;">
+        <div style="font-size:11px;color:#5c5a78;margin-bottom:4px;">Google AI Studio API Key</div>
+        <input type="password" id="apiKey" placeholder="AIzaSy... Paste developers authentication key here" oninput="autoSaveKey(this.value)">
+      </div>
+      <div style="flex:1; min-width:120px;">
+        <div style="font-size:11px;color:#4ade80;margin-bottom:4px;">Target Engine Model</div>
+        <select id="engineModel" style="width:100%;" onchange="changeModelConfiguration(this.value)">
+          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+          <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+          <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+        </select>
+      </div>
     </div>
-    <div style="flex:1; min-width:120px;">
-      <div style="font-size:11px;color:#4ade80;margin-bottom:4px;">Engine Target Model</div>
-      <select id="engineModel" style="width:100%;" onchange="fireModelChangeSequence(this.value)">
-        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-        <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+    <textarea id="topicInput" rows="2" placeholder="Video Topic or Context Parameters Concept Blueprint..." style="margin-bottom:12px;" oninput="autoSaveTopic(this.value)"></textarea>
+    <div class="row" style="margin-bottom:12px;gap:6px;">
+      <select id="channelDna" onchange="autoSaveSettings()">
+        <option value="zenn">🎨 Zenn Style (Immersive 2nd Person)</option>
+        <option value="kurzgesagt">🦉 Kurzgesagt Style (Existential Deep Narrative)</option>
+        <option value="history">✏️ History Doodle (Chunky Chronology)</option>
+        <option value="science">🔬 Science Explainer (High-Pace Deductive)</option>
+      </select>
+      <select id="vidLen" onchange="autoSaveSettings()">
+        <option value="short">Short (60 Beats ~1.5 - 2.5 min)</option>
+        <option value="medium" selected>Medium (150 Beats ~5 - 6 min)</option>
+        <option value="long">Long (280 Beats ~10 - 12 min)</option>
       </select>
     </div>
-    <div style="display:flex; align-items:flex-end;">
-      <button class="btn btns" onclick="saveKey()" style="padding:9px 12px;">💾 Lock Configurations</button>
-    </div>
-  </div>
-
-  <hr>
-
-  <textarea id="topicInput" rows="2" placeholder="Video Topic or Concept Frame — e.g., 'The Dark Reality of the Anthropocene Transition'..." style="margin-bottom:10px;" oninput="autoSaveTopic(this.value)"></textarea>
-
-  <div class="row" style="margin-bottom:12px;gap:6px;">
-    <select id="channelDna" onchange="autoSaveSettings()">
-      <option value="zenn">🎨 Zenn Style (Immersive 2nd Person)</option>
-      <option value="kurzgesagt">🦉 Kurzgesagt Style (Existential Deep Narrative)</option>
-      <option value="history">✏️ History Doodle (Chunky Chronology)</option>
-      <option value="science">🔬 Science Explainer (High-Pace Deductive)</option>
-    </select>
-    <select id="toneSelect" onchange="autoSaveSettings()">
-      <option value="educational">📚 Systemic/Educational</option>
-      <option value="curious">🔍 Structural Mystery</option>
-      <option value="shocking">⚡ Pattern Interrupt/Shocking</option>
-    </select>
-    <select id="langSelect" onchange="autoSaveSettings()">
-      <option value="English">🇬🇧 English</option>
-      <option value="Hinglish">🔀 Hinglish (Default Context)</option>
-      <option value="Hindi">🇮🇳 Hindi</option>
-    </select>
-    <select id="vidLen" onchange="autoSaveSettings()">
-      <option value="short">Short (60 Visual Scenes ~1.5 - 2.5 min)</option>
-      <option value="medium" selected>Medium (150 Visual Scenes ~5 - 6 min)</option>
-      <option value="long">Long (280 Visual Scenes ~10 - 12 min)</option>
-    </select>
-  </div>
-
-  <div class="row">
-    <button class="btn btnp" id="genBtn" onclick="generateScriptPipeline()">✦ Generate High-Retention Script</button>
-  </div>
-
-  <div class="batch-prog" id="batchProg">
-    <div style="font-size:12px;color:#9b99b8;" id="batchText">Processing Core...</div>
-    <div class="bp-bar-wrap"><div class="bp-bar" id="batchBar" style="width:0%"></div></div>
-    <div class="bp-text" id="batchDetail"></div>
-  </div>
-
-  <div class="errbox" id="errBox"></div>
-
-  <!-- TWO PHASE OUTPUT STAGE CONTROLLER -->
-  <div id="scriptOut" style="display:none;">
-    <hr>
-    
-    <!-- PHASE 1 CONTROLLER WINDOW -->
-    <div class="phase-box">
-      <div class="phase-title">Phase 1: Continuous Narration Script Flow (Unfragmented)</div>
-      <textarea class="narration-box" id="continuousNarration" onchange="syncContinuousToState(this.value)"></textarea>
-      <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Natural phrasing block. Modifying this recalculates scene layouts during manual execution updates.</div>
-    </div>
-
-    <div class="row" style="justify-content:space-between;margin-bottom:10px;">
-      <div style="font-size:12px;color:#5c5a78;">✎ Frame Elements Edit Box · Bounds: 1.5s - 4.0s</div>
-      <div class="row" style="gap:6px;">
-        <button class="btn btns btnsm" onclick="reprocessSegmentation()">↺ Sync Structural Fixes</button>
-        <button class="btn btng btnsm" onclick="approveScriptStage()">✓ Approve Visuals →</button>
+    <div class="errbox" id="errBox"></div>
+    <div class="row mt16" style="justify-content:space-between; width:100%;">
+      <button class="btn btns" onclick="triggerRegenerateRestart()" style="color:#fbbf24;">🔄 Save & Restart for New Topic</button>
+      <div class="row">
+        <button class="btn btns" id="continueBtn1" style="display:none;" onclick="advanceLinearStep(2)">Continue Progress ➔</button>
+        <button class="btn btnp" onclick="executeStep1ScriptCompilation()">✦ Click Generate Script</button>
       </div>
     </div>
+  </div>
 
-    <!-- VOICE PREVIEW FIELD SYSTEM -->
-    <div style="margin-top:14px;background:#0d0d14;padding:10px;border-radius:8px;border:1px solid #1e1e2a;">
-      <div style="font-size:12px;color:#9b99b8;margin-bottom:6px;">🔊 Auditory Simulation System (Audio Sync Blueprint)</div>
+  <!-- STEP 2 CARD: CONTINUOUS UNFRAGMENTED SCRIPT CORE FLOW -->
+  <div class="card" id="card2">
+    <div class="ch"><div class="ct">Step 2: Continuous Phrasing Script Flow Core</div><span class="badge ba">Script Stage</span></div>
+    <textarea class="narration-box" id="continuousNarration" style="min-height:200px;" onchange="syncScriptBoxManualState(this.value)"></textarea>
+    <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Natural phrasing block. You can manually edit the text inside this container before advancing components.</div>
+    <div class="row mt16" style="justify-content:space-between; width:100%;">
+      <button class="btn btns" onclick="triggerRegenerateRestart()" style="color:#fbbf24;">🔄 Save & Restart for New Topic</button>
+      <div class="row">
+        <button class="btn btns" onclick="reverseLinearStep(1)">⬅ Back</button>
+        <button class="btn btnp" onclick="advanceLinearStep(3)">Continue to Audio Track Export ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 CARD: AUDITORY ELEVENLABS AUDIO GENERATION PIPELINE INTERFACE -->
+  <div class="card" id="card3">
+    <div class="ch"><div class="ct">Step 3: Vocal Audio Production Track Sync</div><span class="badge ba">Audio Stage</span></div>
+    <div style="font-size:13px;color:#9b99b8;margin-bottom:12px;">Copy the phrasing architecture block below, pass it straight into **ElevenLabs**, execute your generation, download the output vocal wave track, and then return here to click continue.</div>
+    <div class="row style=\"margin-bottom:12px;\">
+      <button class="btn btna btnsm" onclick="copyAudioScriptTextToClipboard()">📋 Copy Phrased Text Block for ElevenLabs</button>
+      <button class="btn btns btnsm" onclick="downloadAudioScriptTextFile()">⬇ Download Script Text (.txt)</button>
+    </div>
+    <div style="margin-top:14px;background:#0d0d14;padding:12px;border-radius:8px;border:1px solid #1e1e2a;">
+      <div style="font-size:11px;color:#9b99b8;margin-bottom:6px;">🔊 Auditory Voice Simulation System Preview</div>
       <div class="row" style="gap:8px;">
-        <div class="row" style="gap:5px;font-size:12px;color:#9b99b8;">
-          Speed <input type="range" id="rateSlider" min="0.7" max="1.4" step="0.05" value="0.95">
-          <span id="rateVal" style="font-family:monospace;font-size:11px;">0.95x</span>
-        </div>
-        <button class="btn btns btnsm" onclick="previewVoiceEngine()">▶ Preview Vocal Track</button>
-        <button class="btn btns btnsm" onclick="stopVoiceEngine()">■ Stop Track</button>
+        <input type="range" id="rateSlider" min="0.7" max="1.4" step="0.05" value="0.95">
+        <button class="btn btns btnsm" onclick="previewVoiceEngineSimulation()">▶ Preview Auditory Track</button>
+        <button class="btn btns btnsm" onclick="stopVoiceEngineSimulation()">■ Stop Track</button>
       </div>
-      <div class="waveform" id="waveformEl" onclick="previewVoiceEngine()"></div>
-      <div style="font-size:10px;color:#5c5a78;margin-top:4px;"><b>Note:</b> Production blueprints call for ZERO background music overlay. Keep audio channels clean.</div>
+      <div class="waveform" id="waveformEl" onclick="previewVoiceEngineSimulation()"></div>
+      <div style="font-size:10px;color:#5c5a78;margin-top:4px;"><b>Note:</b> Viral metrics require completely dry voice files. Do not mix background music loops into the primary audio channel layout.</div>
     </div>
+    <div class="row mt16" style="justify-content:space-between; width:100%;">
+      <button class="btn btns" onclick="triggerRegenerateRestart()" style="color:#fbbf24;">🔄 Save & Restart for New Topic</button>
+      <div class="row">
+        <button class="btn btns" onclick="reverseLinearStep(2)">⬅ Back</button>
+        <button class="btn btnp" onclick="executeStep3ImagePromptsSegmentation()">Continue to Image Prompts ➔</button>
+      </div>
+    </div>
+  </div>
 
-    <hr>
+  <!-- STEP 4 CARD: IMAGE SEGMENTATION PROMPT MAP STACK -->
+  <div class="card" id="card4">
+    <div class="ch"><div class="ct">Step 4: Image Sequencing Prompt Design Manifest</div><span class="badge ba">Prompt Stage</span></div>
+    <div style="background:#161622;border:1px dashed #4ade80;padding:12px;border-radius:8px;margin-bottom:12px;">
+      <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:4px;">🧬 Model Asset Consistency Target Anchor Frame</div>
+      <div style="font-size:11px;color:#9b99b8;" id="charRefText">Reference Configuration Loading...</div>
+      <button class="btn btns btnsm mt8" onclick="copyCharacterReferenceSeed()">📋 Copy Consistency Model Seed</button>
+    </div>
+    <div class="row" style="margin-bottom:12px;">
+      <button class="btn btnp btnsm" onclick="copyAllVisualPromptsStackText()">📋 Copy Sequencing Prompts Block</button>
+      <button class="btn btns btnsm" onclick="downloadVisualPromptStackTextFile()">⬇ Download Prompts Manifest (.txt)</button>
+    </div>
     <div id="scenesContainer"></div>
-    
-    <div class="stats">
-      <div class="stat">Target Beats: <b id="stScenes">—</b></div>
-      <div class="stat">Narration Words: <b id="stWords">—</b></div>
-      <div class="stat">Est. Video Duration: <b id="stDur">—</b></div>
-      <div class="stat">Graphic Assets Count: <b id="stImgs">—</b></div>
-      <span id="durWarn" class="warn" style="display:none;">⚠ Warning: Visual scene cuts slower than high-retention parameters</span>
+    <div class="row mt16" style="justify-content:space-between; width:100%;">
+      <button class="btn btns" onclick="triggerRegenerateRestart()" style="color:#fbbf24;">🔄 Save & Restart for New Topic</button>
+      <div class="row">
+        <button class="btn btns" onclick="reverseLinearStep(3)">⬅ Back</button>
+        <button class="btn btnp" onclick="executeStep4TimelineCompilation()">Continue to Structural Timelines ➔</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- STEP 2 CARD -->
-<div class="card locked" id="card2">
-  <div class="ch">
-    <div class="ct">② Image Strategies & Model Configuration</div>
-    <span class="badge bp" id="badge2">Locked</span>
-  </div>
-
-  <!-- CHARACTER SYSTEM Blueprints -->
-  <div style="background:#161622;border:1px dashed #4ade80;padding:12px;border-radius:8px;margin-bottom:12px;">
-    <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:4px;">🧬 Global Asset Consistency: Main Character Anchor Frame</div>
-    <div style="font-size:11px;color:#9b99b8;margin-bottom:8px;" id="charRefText">Reference Configuration Loading...</div>
-    <button class="btn btns btnsm" onclick="copyCharacterReference()">📋 Copy Structural Model Seed</button>
-  </div>
-
-  <div style="font-size:12px;color:#9b99b8;margin-bottom:10px;">Visual sequencing pipelines generated. Use these exact specifications in drawing engines.</div>
-  
-  <div class="row" style="margin-bottom:10px;">
-    <button class="btn btnp btnsm" onclick="copyAllPromptsText()">📋 Copy Sequencing Prompts Block</button>
-  </div>
-  
-  <div id="promptsContainer" style="background:#0d0d14;border:1px solid #1a1a24;border-radius:8px;padding:10px 12px;max-height:260px;overflow-y:auto;font-family:monospace;font-size:11px;color:#9b99b8;line-height:1.9;white-space:pre-wrap;"></div>
-  
-  <div class="row mt12">
-    <button class="btn btng btnsm" onclick="goToExportStage()">✓ Advance to Packaging Asset Download →</button>
-  </div>
-</div>
-
-<!-- STEP 3 CARD -->
-<div class="card locked" id="card3">
-  <div class="ch">
-    <div class="ct">③ Export Pipelines & Continuous Correction Engines</div>
-    <span class="badge bp" id="badge3">Locked</span>
-  </div>
-
-  <div class="export-box" style="background:#1a1a24;border:1px solid #2a2a3a;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;">
-    <div style="font-size:12px;color:#9b99b8;margin-bottom:6px;"><b>Editor Pro-Tip:</b> Execute natural audio export in ElevenLabs first, map output via unlisted YouTube Studio/Descript timestamps, and verify sentence breaks. Visual cuts map to semantic punctuation pauses.</div>
-    <div class="row" style="justify-content:space-between;background:#0d0d14;padding:8px;border-radius:6px;">
-      <span style="font-size:12px;">📄 Clean Phrased Audio Script Text (.txt)</span>
-      <button class="btn btns btnsm" onclick="downloadNarrationText()">Download</button>
+  <!-- STEP 5 CARD: STRUCTURAL TIMELINE MANIFEST -->
+  <div class="card" id="card5">
+    <div class="ch"><div class="ct">Step 5: Operational Timeline Mapping Manifest</div><span class="badge ba">Timeline Stage</span></div>
+    <div style="font-size:12px;color:#9b99b8;margin-bottom:10px;">Use this layout grid to synchronize image placement durations with verified sentence vocal pacing breaks inside your video editing platform dashboard.</div>
+    <div class="row" style="margin-bottom:12px;">
+      <button class="btn btna btnsm" onclick="copyTimelineManifestTextToClipboard()">📋 Copy Timelines Manifest String</button>
+      <button class="btn btns btnsm" onclick="downloadTimelineManifestFileText()">⬇ Download Timeline Manifest (.txt)</button>
     </div>
-    <div class="row" style="justify-content:space-between;background:#0d0d14;padding:8px;border-radius:6px;">
-      <span style="font-size:12px;">🖼 High-Retention Graphic Prompt Stack (.txt)</span>
-      <button class="btn btns btnsm" onclick="downloadPromptsText()">Download</button>
-    </div>
-    <div class="row" style="justify-content:space-between;background:#0d0d14;padding:8px;border-radius:6px;">
-      <span style="font-size:12px;">⏱ Timeline Mapping Execution Manifest (.txt)</span>
-      <button class="btn btns btnsm" onclick="downloadTimelineTextFile()">Download</button>
-    </div>
-    <button class="btn btnp btnsm" onclick="downloadAllBundle()" style="width:100%;justify-content:center;margin-top:4px;">⬇ Export Complete Creation Package Bundle</button>
-  </div>
-
-  <hr>
-
-  <!-- FEEDBACK ARCHITECTURE -->
-  <div style="font-size:13px;font-weight:600;margin-bottom:6px;">💬 Continuous Channel Architecture Feedback Loop</div>
-  <div style="font-size:12px;color:#5c5a78;margin-bottom:8px;">Input structural anomalies or pacing rule shifts here. ReelForge permanently updates system prompts for this profile instance.</div>
-  <textarea id="feedbackInput" rows="2" placeholder="e.g., 'Increase hook tension constraints, ensure step 3 curiosity gap uses systemic code labeling'..." style="margin-bottom:8px;"></textarea>
-  <button class="btn btnp btnsm" onclick="applySystemicFeedback()">✦ Inject Structural Rule & Re-Compile</button>
-
-  <div style="font-size:12px;font-weight:600;margin-top:14px;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;">
-    <span>🧠 Structural Memory Log <span style="color:#5c5a78;font-weight:400;">(Permanent Injected Prompt Parameters)</span></span>
-    <button class="btn btns btnsm" onclick="clearMemoryLog()" style="font-size:10px;padding:3px 8px;">Purge Profile Rules</button>
-  </div>
-  <div class="mlog" id="memoryLog"><div style="font-size:12px;color:#5c5a78;">No personalized system parameters loaded. Injection logs empty.</div></div>
-</div>
-
-<!-- COMPREHENSIVE STEP 4 METADATA GENERATOR CARD -->
-<div class="card locked" id="card4">
-  <div class="ch">
-    <div class="ct">④ Integrated High-CTR YouTube Metadata Engine</div>
-    <span class="badge bp" id="badge4">Locked</span>
-  </div>
-  <div style="font-size:12px;color:#9b99b8;margin-bottom:12px;">Compiles scroll-stopping structural titles, metadata descriptions containing calculated timestamp vectors, and structural tags based on verified script context weights.</div>
-  
-  <button class="btn btnp btnsm" id="metaGenBtn" onclick="generateYouTubeMetadataPipeline()">✦ Compile High-CTR Metadata Package</button>
-  
-  <div id="metadataOutputBox" style="display:none;margin-top:14px;display:flex;flex-direction:column;gap:12px;">
-    <div>
-      <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:4px;">High-CTR Video Title Variations (Max 70 Characters Formula Constraints)</div>
-      <div id="metaTitles" style="background:#0d0d14;padding:10px;border-radius:6px;font-family:monospace;font-size:12px;white-space:pre-wrap;color:#f0efff;border:1px solid #2a2a3a;"></div>
-    </div>
-    <div>
-      <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:4px;">Algorithmic Video Description (Hooks + Vector Framework Context + Chapter Blocks)</div>
-      <div id="metaDesc" style="background:#0d0d14;padding:10px;border-radius:6px;font-family:monospace;font-size:12px;white-space:pre-wrap;color:#f0efff;border:1px solid #2a2a3a;max-height:200px;overflow-y:auto;"></div>
-    </div>
-    <div>
-      <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:4px;">High-Weight Semantic Metadata SEO Tag Blocks (Comma-Separated)</div>
-      <div id="metaTags" style="background:#0d0d14;padding:10px;border-radius:6px;font-family:monospace;font-size:12px;white-space:pre-wrap;color:#fbbf24;border:1px solid #2a2a3a;"></div>
+    <div class="display-block-box" id="timelineManifestOutputContainer"></div>
+    <div class="row mt16" style="justify-content:space-between; width:100%;">
+      <button class="btn btns" onclick="triggerRegenerateRestart()" style="color:#fbbf24;">🔄 Save & Restart for New Topic</button>
+      <div class="row">
+        <button class="btn btns" onclick="reverseLinearStep(4)">⬅ Back</button>
+        <button class="btn btnp" onclick="executeStep5SEOOptimizationPipeline()">Continue to SEO Optimizations ➔</button>
+      </div>
     </div>
   </div>
-</div>
+
+  <!-- STEP 6 CARD: SEO METADATA PACKAGING OPTIMIZATION CARD -->
+  <div class="card" id="card6">
+    <div class="ch"><div class="ct">Step 6: High-CTR SEO Metadata Engine Package</div><span class="badge ba">SEO Stage</span></div>
+    <div style="font-size:12px;color:#9b99b8;margin-bottom:12px;">Scroll-stopping conversion titles, introduction hooks summaries, placeholder timestamp configurations, and keyword arrays optimized using reference analytics frameworks.</div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div>
+        <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:4px;">High-CTR Optimized Title Configurations (Under 70 Character Constraints)</div>
+        <div class="display-block-box" id="metaTitles"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:4px;">Algorithmic Distribution Video Descriptions Block (Hook Summary + Vector Context)</div>
+        <div class="display-block-box" id="metaDesc" style="max-height:160px; overflow-y:auto;"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:4px;">High-Weight Comma-Separated SEO Tag Mapping Blocks</div>
+        <div class="display-block-box" id="metaTags" style="color:#fbbf24;"></div>
+      </div>
+    </div>
+    <div class="row mt16" style="justify-content:space-between; width:100%;">
+      <button class="btn btns" onclick="triggerRegenerateRestart()" style="color:#fbbf24;">🔄 Save & Restart for New Topic</button>
+      <div class="row">
+        <button class="btn btns" onclick="reverseLinearStep(5)">⬅ Back</button>
+        <button class="btn btnp" onclick="executeStep6ThumbnailStrategyPipeline()">Continue to Thumbnail Psychological Strategy ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 7 CARD: PSYCHOLOGICAL THUMBNAIL CONCEPTS STRATEGY DEPLOYMENT -->
+  <div class="card" id="card7">
+    <div class="ch"><div class="ct">Step 7: Thumbnail Visual Psychology & Concept Framing Strategy</div><span class="badge ba">Thumbnail Stage</span></div>
+    <div style="font-size:12px;color:#9b99b8;margin-bottom:12px;">Clickable graphic blueprints engineered explicitly around structural color psychology, strict text limits, and optimized formats to lock browsing attention parameters.</div>
+    <div class="display-block-box" id="thumbnailStrategyOutputContainer" style="line-height:1.8; color:#a8fdc2;"></div>
+    <div class="row mt16" style="justify-content:space-between; width:100%;">
+      <div style="font-size:12px; color:#5c5a78; display:flex; align-items:center;">✓ Linear Workflow Loop Complete</div>
+      <button class="btn btnp" onclick="triggerRegenerateRestart()" style="background:#fbbf24; color:#0a0a0f;">✦ Click Regenerate & Restart for New Topic</button>
+    </div>
+  </div>
 
 </div>
 
 <script>
-// CONFIGURATIONS & STATE ENGINE BLUEPRINTS
+// CONFIGURATIONS & COMPREHENSIVE VARIABLE BLUEPRINTS
 var API_KEY = '';
 var SELECTED_MODEL = 'gemini-2.0-flash';
+var currentLinearStep = 1;
 var continuousText = '';
 var scenes = [];
-var memoryRules = [];
 var loadingTimer = null;
 var loadingSeconds = 0;
+var isCancelled = false;
 
 var MIN_DUR = 1.5;            
 var MAX_DUR = 4.0;            
 var TARGET_AVG_DUR = 2.5;     
 var MAX_WORDS_PER_SCENE = 8;  
 var WORDS_PER_SEC = 2.68;     
-var isCancelled = false;
-
 var SCENE_COUNTS = { short: 60, medium: 150, long: 280 };
 var BATCH_SIZE = 25; 
 
-(function initApp() {
+(function initLinearApp() {
   try {
-    var ver = localStorage.getItem('rf_pro_ver');
-    if(ver !== '3.6') { localStorage.clear(); localStorage.setItem('rf_pro_ver','3.6'); }
+    var ver = localStorage.getItem('rf_linear_ver');
+    if(ver !== '4.0') { localStorage.clear(); localStorage.setItem('rf_linear_ver','4.0'); }
     
     var k = localStorage.getItem('rf_apikey');
     if (k) { API_KEY = k; document.getElementById('apiKey').value = k; }
-
     var m = localStorage.getItem('rf_model');
     if (m) { SELECTED_MODEL = m; document.getElementById('engineModel').value = m; }
-
     var topic = localStorage.getItem('rf_topic');
     if (topic) document.getElementById('topicInput').value = topic;
-    var tone = localStorage.getItem('rf_tone');
-    if (tone) document.getElementById('toneSelect').value = tone;
-    var lang = localStorage.getItem('rf_lang');
-    if (lang) document.getElementById('langSelect').value = lang;
     var len = localStorage.getItem('rf_len');
     if (len) document.getElementById('vidLen').value = len;
     var dna = localStorage.getItem('rf_dna');
     if (dna) document.getElementById('channelDna').value = dna;
 
-    var mem = localStorage.getItem('rf_memory');
-    if (mem) { memoryRules = JSON.parse(mem); updateMemoryLogView(); }
+    // STATE PARSING AUTOMATIC BACKUP RESTORER
+    var stepBackup = localStorage.getItem('rf_linear_step');
+    var ctBackup = localStorage.getItem('rf_continuous');
+    var scBackup = localStorage.getItem('rf_scenes');
 
-    // STATE RESTORE ENGINE MAPPING
-    var sc = localStorage.getItem('rf_scenes');
-    var ct = localStorage.getItem('rf_continuous');
-    if (sc || ct) {
-      if(ct) {
-        continuousText = ct;
-        document.getElementById('continuousNarration').value = continuousText;
-        document.getElementById('scriptOut').style.display = 'block';
+    if (ctBackup) {
+      continuousText = ctBackup;
+      document.getElementById('continuousNarration').value = continuousText;
+      document.getElementById('continueBtn1').style.display = 'inline-flex';
+    }
+    if (scBackup) {
+      scenes = JSON.parse(scBackup);
+    }
+    if (stepBackup) {
+      var targetStep = parseInt(stepBackup) || 1;
+      // Recompute outputs for views elements depending on recovery depth
+      if (scenes.length > 0) {
+        renderScriptVisualLayoutGrid();
+        reconstructTimelineTextString();
       }
-      if(sc) {
-        scenes = JSON.parse(sc);
-        if(scenes.length > 0) {
-          renderScriptVisualLayout();
-          unlockCardComponent(2);
-          unlockCardComponent(3);
-          unlockCardComponent(4);
-          updatePillTrack(4);
-        }
-      }
-      toastNotification('💾 Automatic runtime backup recovered.');
+      var metaTitlesBack = localStorage.getItem('rf_meta_titles');
+      var metaDescBack = localStorage.getItem('rf_meta_desc');
+      var metaTagsBack = localStorage.getItem('rf_meta_tags');
+      if(metaTitlesBack) document.getElementById('metaTitles').textContent = metaTitlesBack;
+      if(metaDescBack) document.getElementById('metaDesc').textContent = metaDescBack;
+      if(metaTagsBack) document.getElementById('metaTags').textContent = metaTagsBack;
+      
+      var thumbBack = localStorage.getItem('rf_thumb_strategy');
+      if(thumbBack) document.getElementById('thumbnailStrategyOutputContainer').textContent = thumbBack;
+
+      advanceLinearStep(targetStep);
+      toastNotification('💾 State backup recovered automatically.');
     }
   } catch(e) {}
-
-  document.getElementById('rateSlider').oninput = function() {
-    document.getElementById('rateVal').textContent = parseFloat(this.value).toFixed(2) + 'x';
-  };
 })();
 
-function autoSaveKey(v) { try { if(v.length>8) localStorage.setItem('rf_apikey', v); API_KEY=v; } catch(e){} }
-function autoSaveTopic(v) { try { localStorage.setItem('rf_topic', v); saveGlobalState(); } catch(e){} }
+function autoSaveKey(v) { try { localStorage.setItem('rf_apikey', v); API_KEY=v; } catch(e){} }
+function autoSaveTopic(v) { try { localStorage.setItem('rf_topic', v); saveGlobalStateTrack(); } catch(e){} }
 function autoSaveSettings() {
   try {
-    localStorage.setItem('rf_tone', document.getElementById('toneSelect').value);
-    localStorage.setItem('rf_lang', document.getElementById('langSelect').value);
     localStorage.setItem('rf_len', document.getElementById('vidLen').value);
     localStorage.setItem('rf_dna', document.getElementById('channelDna').value);
-    saveGlobalState();
+    saveGlobalStateTrack();
   } catch(e){}
 }
-function saveGlobalState() {
+function saveGlobalStateTrack() {
   try {
-    localStorage.setItem('rf_scenes', JSON.stringify(scenes));
+    localStorage.setItem('rf_linear_step', currentLinearStep);
     localStorage.setItem('rf_continuous', continuousText);
+    localStorage.setItem('rf_scenes', JSON.stringify(scenes));
     localStorage.setItem('rf_model', SELECTED_MODEL);
     
     var b = document.getElementById('savedBadge');
@@ -471,38 +374,41 @@ function saveGlobalState() {
   } catch(e){}
 }
 
-// MODEL CHANGE SEQUENCE CONVERSION PIPELINE
-function fireModelChangeSequence(newModel) {
+function changeModelConfiguration(newModel) {
   SELECTED_MODEL = newModel;
-  localStorage.setItem('rf_model', SELECTED_MODEL);
-  saveGlobalState();
-  
-  // Display context execution choice interface
-  document.getElementById('modelAlertBox').style.display = 'block';
-  document.getElementById('modelAlertBox').scrollIntoView({behavior: 'smooth'});
+  saveGlobalStateTrack();
+  toastNotification('Engine model configurations modified to: ' + newModel + '. Previous step parameters retained.');
 }
 
-function handleModelChangeDecision(decisionRoute) {
-  document.getElementById('modelAlertBox').style.display = 'none';
+function advanceLinearStep(stepNumber) {
+  currentLinearStep = stepNumber;
+  localStorage.setItem('rf_linear_step', currentLinearStep);
   
-  if (decisionRoute === 'continue') {
-    toastNotification('Model updated. Seamless execution state retained.');
-  } else if (decisionRoute === 'new_script') {
-    toastNotification('Resetting pipeline execution context for fresh script build.');
-    scenes = [];
-    continuousText = '';
-    document.getElementById('scriptOut').style.display = 'none';
-    saveGlobalState();
-    generateScriptPipeline();
-  } else if (decisionRoute === 'new_prompts') {
-    if (!continuousText) {
-      toastNotification('No script backbone exists. Building new script infrastructure instead.');
-      generateScriptPipeline();
-      return;
-    }
-    toastNotification('Re-segmenting current narrative block via updated model routing...');
-    reprocessSegmentation();
+  // Hide all step layout panels
+  for (var i = 1; i <= 7; i++) {
+    var card = document.getElementById('card' + i);
+    if(card) card.classList.remove('visible');
   }
+  
+  // Show target linear layout card
+  var activeCard = document.getElementById('card' + stepNumber);
+  if(activeCard) activeCard.classList.add('visible');
+  
+  // Synchronize top progress track pills display state
+  for (var i = 1; i <= 7; i++) {
+    var pill = document.getElementById('pill' + i);
+    if (pill) {
+      if(i < stepNumber) pill.className = 'step done';
+      else if(i === stepNumber) pill.className = 'step active';
+      else pill.className = 'step';
+    }
+  }
+  
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function reverseLinearStep(stepNumber) {
+  advanceLinearStep(stepNumber);
 }
 
 function toastNotification(msg) {
@@ -516,27 +422,10 @@ function setStatusIndicator(msg, type) {
   var d = document.getElementById('sdot');
   d.className = 'dot'+(type==='busy'?' busy':type==='err'?' err':'');
 }
-function unlockCardComponent(n) {
-  var c = document.getElementById('card'+n);
-  if(c) { c.classList.remove('locked'); c.classList.add('open'); }
-  var b = document.getElementById('badge'+n);
-  if(b) { b.className = 'badge ba'; b.textContent = 'Active'; }
-}
-function updatePillTrack(n) {
-  for(var i=1;i<=4;i++){
-    var p=document.getElementById('pill'+i);
-    if(p) p.className='step'+(i<n?' done':i===n?' active':'');
-  }
-}
 function showErrorMessage(msg) {
   var b=document.getElementById('errBox');
   b.className='errbox show';
-  b.innerHTML='<b>❌ Architectural Compilation Error:</b> '+msg;
-}
-function calculateDurationVector(text, speedSliderVal) {
-  var words=(text||'').split(/\s+/).filter(Boolean).length;
-  var calculated = Math.ceil(words / (WORDS_PER_SEC * (speedSliderVal || 0.95)));
-  return Math.max(MIN_DUR, Math.min(MAX_DUR, calculated));
+  b.innerHTML='<b>❌ Pipeline Execution Fault Interruption:</b> '+msg;
 }
 
 function showLoaderOverlay(title, sub) {
@@ -552,97 +441,107 @@ function showLoaderOverlay(title, sub) {
   }, 1000);
 }
 function hideLoaderOverlay(){ clearInterval(loadingTimer); document.getElementById('loadingOverlay').className=''; }
-function cancelLoad(){ isCancelled=true; hideLoaderOverlay(); setStatusIndicator('Transaction Interrupted','err'); saveGlobalState(); }
+function cancelLoad(){ isCancelled=true; hideLoaderOverlay(); setStatusIndicator('Transaction Interrupted','err'); saveGlobalStateTrack(); }
 
-function makeGenericApiCall(promptString) {
+function executeNetworkApiCallPayload(promptText) {
   var targetUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + SELECTED_MODEL + ':generateContent?key=' + API_KEY;
   return fetch(targetUrl, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ contents: [{parts:[{text:promptString}]}], generationConfig: {temperature:0.75, maxOutputTokens:3500} })
+    body: JSON.stringify({ contents: [{parts:[{text:promptText}]}], generationConfig: {temperature:0.75, maxOutputTokens:3500} })
   })
   .then(function(res){ 
-    if(!res.ok) throw new Error("Server communication routing failure down network pipe.");
+    if(!res.ok) throw new Error("API server network connection routing parameters rejected.");
     return res.json(); 
   });
 }
 
-// PHASE 1: COMPRESSED BLOCK NARRATION CORE BUILDER
-function generateScriptPipeline() {
-  var keyInput = document.getElementById('apiKey').value.trim();
-  if(keyInput.length>=8) { API_KEY=keyInput; localStorage.setItem('rf_apikey',keyInput); }
-  if(!API_KEY){ showErrorMessage('Valid API developer authentication token required.'); return; }
+// STEP 1 PIPELINE OPERATION: SCRIPT COMPILATION FLOW
+function executeStep1ScriptCompilation() {
+  if(!API_KEY) { showErrorMessage("Valid authentication key configuration required."); return; }
   var topic = document.getElementById('topicInput').value.trim();
-  if(!topic){ toastNotification('Provide topic parameters first.'); return; }
-
+  if(!topic) { toastNotification("Provide topic vector data parameters."); return; }
+  
   document.getElementById('errBox').className = 'errbox';
   var vidLen = document.getElementById('vidLen').value;
   var targetSceneCount = SCENE_COUNTS[vidLen] || 150;
-  var tone = document.getElementById('toneSelect').value;
-  var lang = document.getElementById('langSelect').value;
   var dna = document.getElementById('channelDna').value;
 
-  var memoryContextText = memoryRules.length ? "\nInjected System Overrides:\n" + memoryRules.map(function(r){return "- "+r;}).join("\n") : "";
+  showLoaderOverlay('Executing Step 1: Compiling Phrasing Script Flow', 'Building complete continuous unfragmented narration parameters tracking channel DNA profiles...');
+  setStatusIndicator('Compiling Phrasing Flow...','busy');
 
-  showLoaderOverlay('Phase 1: Compiling Script Backbone', 'Assembling clean, unfragmented narrative flow tracking ' + SELECTED_MODEL + ' protocols...');
-  setStatusIndicator('Compiling Narration Core...','busy');
-
-  var phase1Prompt = "You are a professional script architect mapping internal logic blueprints for YouTube educational channels. " +
+  var masterScriptGenerationPrompt = "You are a specialized script architect mapping internal logic blueprints for YouTube educational channels. " +
     "Generate a single, continuous, highly polished UNFRAGMENTED narration text on the topic: '" + topic + "'. " +
-    "Channel Format Identity: " + dna + " style voice mechanics. Target Tone: " + tone + ". Language Configuration: " + lang + ". " +
+    "Channel Format Identity: " + dna + " style voice mechanics. Language Configuration: Hinglish conversational workflow structure. " +
     "Total target vocabulary size: approximately " + Math.round(targetSceneCount * 5.5) + " words. " +
     "\nCRITICAL STRUCTURAL ARCHITECTURE REQUIREMENTS:\n" +
     "- The script must open with a strict Hook Structure: Scenes 1-2 detail a relatable modern moment experienced by the user. Scene 3 delivers a strict pattern interrupt ('But the truth is far stranger...'). Scene 4 outputs a hard cognitive reframe.\n" +
     "- You must weave in at least 2-3 specific, real named researchers, historical figures, academic case studies, or institutional research reports by name naturally to build high data authority context.\n" +
     "- Sentence Rhythm Rule: Enforce an irregular pacing grid: Short punchy sentence. Short sentence. Longer sentence building data depth. Short sentence. Immersive question every 4-6 lines.\n" +
     "- The structural end must run an Echo Close formula: the final conceptual statement must echo back to the opening modern hook scene, entirely reframing its context with evolved understanding.\n" +
-    memoryContextText + "\nOutput ONLY the plain narration text script. Do not output scene brackets, labels, background suggestions, or technical markup.";
+    "Output ONLY the plain narration text script. Do not output scene brackets, labels, background suggestions, or technical markup.";
 
-  makeGenericApiCall(phase1Prompt)
+  executeNetworkApiCallPayload(masterScriptGenerationPrompt)
   .then(function(data){
-    if(!data.candidates || !data.candidates[0]) throw new Error('API down-stream core returned empty configuration data blocks.');
+    hideLoaderOverlay();
+    if(!data.candidates || !data.candidates[0]) throw new Error('API downstream component sent back null token structures.');
     continuousText = data.candidates[0].content.parts[0].text.trim();
-    document.getElementById('continuousNarration').value = continuousText;
-    document.getElementById('scriptOut').style.display = 'block';
-    saveGlobalState(); // Auto-save phase structural parameters
     
-    executeSegmentationPhase(targetSceneCount, dna, tone, topic);
+    document.getElementById('continuousNarration').value = continuousText;
+    document.getElementById('continueBtn1').style.display = 'inline-flex';
+    
+    setStatusIndicator('Step 1 Operational Stable','');
+    saveGlobalStateTrack();
+    advanceLinearStep(2);
   })
   .catch(function(err){
     hideLoaderOverlay();
     showErrorMessage(err.message || String(err));
-    setStatusIndicator('Phase 1 Error','err');
+    setStatusIndicator('Step 1 Interrupted','err');
   });
 }
 
-// PHASE 2: MOOD COLORS AND VISUAL SLICES COMPILER
-function executeSegmentationPhase(targetSceneCount, dna, tone, topic) {
-  document.getElementById('ltitle').textContent = "Phase 2: Compiling Visual Slices";
-  document.getElementById('lsub').textContent = "Slicing narration block into visual prompt segments using: " + SELECTED_MODEL;
-  
+function syncScriptBoxManualState(val) {
+  continuousText = val;
+  saveGlobalStateTrack();
+}
+
+function copyAudioScriptTextToClipboard() {
+  navigator.clipboard.writeText(continuousText);
+  toastNotification('Clean narration copied. Paste track directly into ElevenLabs engine.');
+}
+function downloadAudioScriptTextFile() {
+  downloadFileElement('elevenlabs-narration-script.txt', continuousText);
+}
+
+// STEP 3 PIPELINE OPERATION: IMAGE SLICES SEGMENTATION STACK BUILDER
+function executeStep3ImagePromptsSegmentation() {
+  var vidLen = document.getElementById('vidLen').value;
+  var targetSceneCount = SCENE_COUNTS[vidLen] || 150;
+  var dna = document.getElementById('channelDna').value;
+
+  showLoaderOverlay('Executing Step 3: Compiling Slices Framework', 'Segmenting clean narration block into strict high-retention image prompt matrices via ' + SELECTED_MODEL);
+  setStatusIndicator('Compiling Prompt Manifest...','busy');
+
   var totalBatchesNeeded = Math.ceil(targetSceneCount / BATCH_SIZE);
   var accumulatedScenes = [];
   var activeBatchIndex = 0;
-
+  
   var charDescriptionAnchor = "Main character designed as a minimal 2D doodle animation, filled circular head layout with simple dark dot eyes and expressive thick black curved eyebrows, linear stick body lines, clean flat fills";
   localStorage.setItem('rf_char_anchor', charDescriptionAnchor + " standing in a neutral reference pose on a solid white color space, bold outlines.");
   document.getElementById('charRefText').textContent = localStorage.getItem('rf_char_anchor');
 
-  function compileBatchLoop() {
-    if(isCancelled) { saveGlobalState(); return; }
+  function runLinearBatchLoop() {
+    if(isCancelled) return;
     activeBatchIndex++;
     
     var startingSceneId = accumulatedScenes.length + 1;
     var remainingScenesCount = targetSceneCount - accumulatedScenes.length;
     var batchSizeToFetch = Math.min(BATCH_SIZE, remainingScenesCount);
 
-    document.getElementById('batchProg').style.display = 'block';
-    document.getElementById('batchText').textContent = 'Processing segment batch ' + activeBatchIndex + ' of ' + totalBatchesNeeded;
-    document.getElementById('batchBar').style.width = Math.round(((activeBatchIndex - 1) / totalBatchesNeeded) * 100) + '%';
-
     var currentSliceWordsAnchor = continuousText.split(/\s+/).slice(accumulatedScenes.length * 6, (accumulatedScenes.length * 6) + (batchSizeToFetch * 8)).join(" ");
 
-    var phase2Prompt = "You are a visual continuity systems director. Split the following narration script snippet into EXACTLY " + batchSizeToFetch + " scene segmentation blocks starting at ID: " + startingSceneId + ".\n" +
+    var segmentationPromptString = "You are a visual continuity systems director. Split the following narration script snippet into EXACTLY " + batchSizeToFetch + " scene segmentation blocks starting at ID: " + startingSceneId + ".\n" +
       "Snippet Text Context:\n\"" + currentSliceWordsAnchor + "\"\n\n" +
       "RETURN ONLY A RAW JSON ARRAY. Do not include markdown wraps, no backticks, no trailing commentary text block. Follow this array template scheme:\n" +
       '[{"id":' + startingSceneId + ',"type":"main","label":"Main Track","script":"Narration line text here","imagePrompt":"Visual description blueprint text","scene_key":"unique_conceptual_key"}]\n\n' +
@@ -658,317 +557,9 @@ function executeSegmentationPhase(targetSceneCount, dna, tone, topic) {
       "  * Style Lock configuration: no gradients, no shading layers, no 3D elements, flat color vectors, 16:9 aspect ratio blueprint.\n" +
       "- Character reference link instructions: Integrate " + charDescriptionAnchor + " into every prompt containing actors to ensure framework layout locked consistency.";
 
-    makeGenericApiCall(phase2Prompt)
+    executeNetworkApiCallPayload(segmentationPromptString)
     .then(function(rawJsonData){
       var rawString = rawJsonData.candidates[0].content.parts[0].text.trim();
       
-      // STRIP OUT COMMON MARKDOWN CODE WRAPS IF PRESENT
       if (rawString.startsWith("```")) {
-        rawString = rawString.replace(/^```(?:json)?/, "").replace(/```$/, "").trim();
-      }
-      
-      var cleanStart = rawString.indexOf('[');
-      var cleanEnd = rawString.lastIndexOf(']');
-      if(cleanStart === -1 || cleanEnd === -1) {
-        // FALLBACK: Check if wrapped inside a primary configurations object map
-        cleanStart = rawString.indexOf('{');
-        cleanEnd = rawString.lastIndexOf('}');
-        if (cleanStart === -1) throw new Error("JSON framework array mapping error returned from downstream layers.");
-      }
-      
-      var extractedContent = rawString.slice(cleanStart, cleanEnd + 1);
-      var parsedBatchArray = JSON.parse(extractedContent);
-      
-      if (!Array.isArray(parsedBatchArray) && parsedBatchArray.scenes) {
-        parsedBatchArray = parsedBatchArray.scenes;
-      }
-      if (!Array.isArray(parsedBatchArray)) {
-        parsedBatchArray = [parsedBatchArray];
-      }
-      
-      parsedBatchArray.forEach(function(sc, idx){
-        sc.id = startingSceneId + idx;
-        accumulatedScenes.push(sc);
-      });
-
-      // Regular runtime intervals trigger local backup storage parameters
-      scenes = accumulatedScenes;
-      saveGlobalState();
-
-      if(accumulatedScenes.length < targetSceneCount && activeBatchIndex < totalBatchesNeeded) {
-        setTimeout(compileBatchLoop, 1500);
-      } else {
-        hideLoaderOverlay();
-        document.getElementById('batchProg').style.display = 'none';
-        
-        var speedSliderVal = parseFloat(document.getElementById('rateSlider').value) || 0.95;
-        scenes.forEach(function(s){ s.duration = calculateDurationVector(s.script, speedSliderVal); });
-
-        // AUTOMATED HOOK VISUAL RETENTION SEGMENT ANOMALY DETECTOR
-        for(var i = 1; i < scenes.length; i++) {
-          if(scenes[i].scene_key && scenes[i].scene_key === scenes[i-1].scene_key) {
-            scenes[i].isHoldFrame = true;
-          }
-        }
-
-        renderScriptVisualLayout();
-        saveGlobalState();
-        
-        unlockCardComponent(2);
-        unlockCardComponent(3);
-        unlockCardComponent(4);
-        updatePillTrack(2);
-        
-        setStatusIndicator('System Output Stabilized','');
-        toastNotification('✓ Slices compiled successfully via ' + SELECTED_MODEL);
-      }
-    })
-    .catch(function(err){
-      hideLoaderOverlay();
-      showErrorMessage("Visual parsing runtime interruption: " + err.message);
-      setStatusIndicator('Phase 2 Error','err');
-      saveGlobalState(); // Retain data generated prior to compilation crash
-    });
-  }
-
-  compileBatchLoop();
-}
-
-function reprocessSegmentation() {
-  var vidLen = document.getElementById('vidLen').value;
-  var targetSceneCount = SCENE_COUNTS[vidLen] || 150;
-  var dna = document.getElementById('channelDna').value;
-  var tone = document.getElementById('toneSelect').value;
-  executeSegmentationPhase(targetSceneCount, dna, tone, localStorage.getItem('rf_topic'));
-}
-
-function renderScriptVisualLayout() {
-  var container = document.getElementById('scenesContainer');
-  container.innerHTML = '';
-  var labelClasses = {hook:'t-hook',setup:'t-setup',main:'t-main',reveal:'t-reveal',bridge:'t-bridge',cta:'t-cta'};
-
-  scenes.forEach(function(sc, idx){
-    var wordCount = (sc.script || '').split(/\s+/).filter(Boolean).length;
-    var div = document.createElement('div');
-    div.className = 'sblock';
-    
-    var holdBadgeText = sc.isHoldFrame ? '<span class="hold-badge">🎬 HOLD FRAME — Shift Animation Expression Only</span>' : '';
-    
-    div.innerHTML = `
-      <div class="smeta">
-        <span class="snum">Beat #${sc.id}</span>
-        <span class="stag ${labelClasses[sc.type] || 't-main'}">${sc.type.toUpperCase()}</span>
-        ${holdBadgeText}
-        <div class="durbadge">⏱<input type="number" value="${sc.duration}" step="0.5" min="1.5" max="4.0" onchange="updateSceneDurationManual(${idx}, this.value)">s</div>
-        <span class="wc">${wordCount} words</span>
-      </div>
-      <textarea class="sscript" rows="2" oninput="liveEditSceneNarration(${idx}, this)">${sc.script || ''}</textarea>
-      <div style="font-size:10px;color:#5c5a78;margin-bottom:2px;">🖼 Visual Asset Design Mapping Parameters:</div>
-      <textarea class="sprompt" rows="3" onchange="scenes[${idx}].imagePrompt=this.value;saveGlobalState();">${sc.imagePrompt || ''}</textarea>
-    `;
-    container.appendChild(div);
-  });
-
-  compilePromptOutputBoxText();
-  calculateSystemAggregateStats();
-}
-
-function liveEditSceneNarration(idx, element) {
-  scenes[idx].script = element.value;
-  var speedSliderVal = parseFloat(document.getElementById('rateSlider').value) || 0.95;
-  scenes[idx].duration = calculateDurationVector(element.value, speedSliderVal);
-  renderScriptVisualLayout();
-  saveGlobalState();
-}
-
-function updateSceneDurationManual(idx, value) {
-  scenes[idx].duration = Math.max(MIN_DUR, Math.min(MAX_DUR, parseFloat(value) || TARGET_AVG_DUR));
-  calculateSystemAggregateStats();
-  saveGlobalState();
-}
-
-function calculateSystemAggregateStats() {
-  var aggDuration = scenes.reduce(function(acc, s){ return acc + (s.duration || TARGET_AVG_DUR); }, 0);
-  var aggWords = scenes.reduce(function(acc, s){ return acc + (s.script || '').split(/\s+/).filter(Boolean).length; }, 0);
-  
-  document.getElementById('stScenes').textContent = scenes.length;
-  document.getElementById('stWords').textContent = aggWords;
-  document.getElementById('stDur').textContent = Math.floor(aggDuration / 60) + "m " + Math.round(aggDuration % 60) + "s (" + aggDuration + "s)";
-  document.getElementById('stImgs').textContent = scenes.length + " assets";
-
-  var pacingAnomaly = scenes.some(function(s){ return s.duration > MAX_DUR; });
-  document.getElementById('durWarn').style.display = pacingAnomaly ? 'inline' : 'none';
-}
-
-function approveScriptStage() {
-  updatePillTrack(3);
-  unlockCardComponent(2);
-  document.getElementById('card2').scrollIntoView({behavior:'smooth'});
-}
-
-function compilePromptOutputBoxText() {
-  var displayLines = [];
-  var timeAccumulator = 0;
-  scenes.forEach(function(sc, index){
-    var startMin = Math.floor(timeAccumulator / 60);
-    var startSec = Math.floor(timeAccumulator % 60);
-    timeAccumulator += sc.duration;
-    var endMin = Math.floor(timeAccumulator / 60);
-    var endSec = Math.floor(timeAccumulator % 60);
-
-    var timeHeader = "FRAME ASSET " + String(index+1).padStart(3,'0') + " | " + 
-                     startMin + ":" + String(startSec).padStart(2,'0') + " → " + 
-                     endMin + ":" + String(endSec).padStart(2,'0') + " (" + sc.duration + "s) [" + sc.type.toUpperCase() + "]";
-    displayLines.push(timeHeader);
-    displayLines.push(sc.imagePrompt || '');
-    displayLines.push("");
-  });
-  document.getElementById('promptsContainer').textContent = displayLines.join('\n');
-}
-
-function copyCharacterReference() {
-  var ref = localStorage.getItem('rf_char_anchor') || '';
-  navigator.clipboard.writeText(ref);
-  toastNotification('Consistency model layout copied.');
-}
-
-function copyAllPromptsText() {
-  var txt = document.getElementById('promptsContainer').textContent;
-  navigator.clipboard.writeText(txt);
-  toastNotification('Graphic prompt configuration sets block synchronized.');
-}
-
-function goToExportStage() {
-  updatePillTrack(3);
-  unlockCardComponent(3);
-  document.getElementById('card3').scrollIntoView({behavior:'smooth'});
-}
-
-function downloadFileElement(filename, text) {
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-  element.setAttribute('download', filename);
-  element.style.display = 'none';
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);
-}
-
-function downloadNarrationText() {
-  downloadFileElement('clean-narration-script.txt', continuousText);
-}
-function downloadPromptsText() {
-  downloadFileElement('visual-prompt-manifest.txt', document.getElementById('promptsContainer').textContent);
-}
-function downloadTimelineTextFile() {
-  var manifestLines = ["REELFORGE TIMELINE GENERATOR STRATEGY V3.6\n"];
-  var currentAccumulator = 0;
-  scenes.forEach(function(sc, idx){
-    manifestLines.push("Asset ID: " + String(idx+1).padStart(3,'0') + " | Time Vector: " + currentAccumulator.toFixed(2) + "s | Length: " + sc.duration + "s | Text Line: " + sc.script);
-    currentAccumulator += sc.duration;
-  });
-  downloadFileElement('timeline-manifest.txt', manifestLines.join('\n'));
-}
-function downloadAllBundle() {
-  downloadNarrationText();
-  setTimeout(downloadPromptsText, 300);
-  setTimeout(downloadTimelineTextFile, 600);
-}
-
-// HIGH-CTR YT METADATA COMPILER INFRASTRUCTURE
-function generateYouTubeMetadataPipeline() {
-  if(!API_KEY) { toastNotification("Provide structural developer credentials first."); return; }
-  setStatusIndicator('Compiling Optimization Tags...','busy');
-  showLoaderOverlay('Phase 4: Optimization Manifest', 'Running high-weight click indexing configurations via ' + SELECTED_MODEL + '...');
-
-  var metadataPrompt = "You are a professional conversion optimization engineer managing digital media distribution frameworks. " +
-    "Analyze the following complete continuous script narration block:\n\n\"" + continuousText + "\"\n\n" +
-    "Output EXACTLY 3 high-CTR title variations limited strictly to under 70 characters following proven curiosity gaps and stakes formulas. " +
-    "Then, generate a description metadata manifest detailing a script synthesis introduction hook, a placeholder grid for timestamps mapping, and calls to action. " +
-    "Finally, generate a block of 30 hyper-optimized optimized comma-separated semantic search SEO tags.\n\n" +
-    "Provide clear, human-readable structural boundaries for: TITLES, DESCRIPTION, and TAGS. Do not output code blocks inside the response sections.";
-
-  makeGenericApiCall(metadataPrompt)
-  .then(function(data){
-    hideLoaderOverlay();
-    setStatusIndicator('Metadata Optimizations Ready','');
-    var text = data.candidates[0].content.parts[0].text;
-    
-    document.getElementById('metaTitles').textContent = text.slice(0, text.indexOf('DESCRIPTION')) || text;
-    document.getElementById('metaDesc').textContent = text.slice(text.indexOf('DESCRIPTION'), text.indexOf('TAGS')) || '';
-    document.getElementById('metaTags').textContent = text.slice(text.indexOf('TAGS')) || '';
-    
-    document.getElementById('metadataOutputBox').style.display = 'block';
-    saveGlobalState();
-    toastNotification('Metadata optimization block complete.');
-  })
-  .catch(function(err){
-    hideLoaderOverlay();
-    setStatusIndicator('Metadata Generation Interrupted','err');
-  });
-}
-
-function applySystemicFeedback() {
-  var fb = document.getElementById('feedbackInput').value.trim();
-  if(!fb) return;
-  memoryRules.push(fb);
-  localStorage.setItem('rf_memory', JSON.stringify(memoryRules));
-  updateMemoryLogView();
-  document.getElementById('feedbackInput').value = '';
-  generateScriptPipeline();
-}
-function updateMemoryLogView() {
-  var log = document.getElementById('memoryLog');
-  if(!memoryRules.length){ log.innerHTML = '<div style="font-size:12px;color:#5c5a78;">No profile rule parameter blocks loaded. Injection log empty.</div>'; return; }
-  log.innerHTML = memoryRules.map(function(r, i){
-    return '<div class="mitem"><span>🧠</span><span style="flex:1;">'+r+'</span><button class="mdel" onclick="deleteMemoryItem('+i+')">✕</button></div>';
-  }).join('');
-}
-function deleteMemoryItem(i) {
-  memoryRules.splice(i,1);
-  localStorage.setItem('rf_memory', JSON.stringify(memoryRules));
-  updateMemoryLogView();
-}
-function clearMemoryLog() {
-  memoryRules = [];
-  localStorage.removeItem('rf_memory');
-  updateMemoryLogView();
-}
-
-// AUDITORY RUNTIME AUDIO SYSTEM PLUGINS
-function previewVoiceEngine() {
-  if(!scenes.length || !window.speechSynthesis) return;
-  stopVoiceEngine();
-  var completeVocalText = scenes.map(function(s){ return s.script || ''; }).join('. ');
-  voiceUtterance = new SpeechSynthesisUtterance(completeVocalText);
-  voiceUtterance.rate = parseFloat(document.getElementById('rateSlider').value) || 0.95;
-  
-  var bars = document.getElementById('waveformEl').querySelectorAll('.wbar');
-  voiceUtterance.onstart = function(){ bars.forEach(function(b){ b.classList.add('playing'); b.style.opacity = '1'; })}
-  voiceUtterance.onend = function(){ bars.forEach(function(b){ b.classList.remove('playing'); b.style.opacity = '0.4'; })}
-  
-  window.speechSynthesis.speak(voiceUtterance);
-}
-function stopVoiceEngine() {
-  if(window.speechSynthesis) window.speechSynthesis.cancel();
-  var bars = document.getElementById('waveformEl').querySelectorAll('.wbar');
-  bars.forEach(function(b){ b.classList.remove('playing'); b.style.opacity = '0.4'; });
-}
-function clearAll() {
-  if(!confirm('Purge visual asset strategy caches and local state mappings completely?')) return;
-  localStorage.clear();
-  location.reload();
-}
-
-(function generateVisualWaveforms() {
-  var wf = document.getElementById('waveformEl'); wf.innerHTML = '';
-  for(var i=0; i<65; i++) {
-    var b = document.createElement('div'); b.className = 'wbar';
-    b.style.height = (Math.random() * 20 + 4) + 'px';
-    b.style.animationDelay = (Math.random() * 1.1) + 's';
-    wf.appendChild(b);
-  }
-})();
-</script>
-</body>
-</html>
+        rawString = rawString.replace(/^
