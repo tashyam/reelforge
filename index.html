@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReelForge Pro v3</title>
+<title>ReelForge Pro v3.5</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0a0a0f;color:#f0efff;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
@@ -56,6 +56,10 @@ textarea::placeholder,input::placeholder{color:#5c5a78;}
 /* TWO-PHASE BLOCK */
 .phase-box{background:#161622;border:1px solid #2b2b3d;border-radius:10px;padding:14px;margin-bottom:12px;}
 .phase-title{font-size:12px;color:#4ade80;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+
+/* MODEL CONVERSION FLOW INFOBAR */
+.model-alert-box{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:8px;padding:12px;margin-bottom:14px;display:none;}
+.model-alert-title{font-size:12px;color:#fbbf24;font-weight:700;margin-bottom:4px;}
 
 /* OVERLAY SPIN ENGINE */
 #loadingOverlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.95);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(4px);}
@@ -128,12 +132,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="ltitle" id="ltitle">Generating Content Architecture…</div>
   <div class="ltimer" id="ltimer">0s</div>
   <div class="lbatch" id="lbatch" style="display:none;">Batch 1 of 1</div>
-  <div style="font-size:10px;color:#5c5a78;text-align:center;max-width:280px;">Phase 1: Compiling high-retention narration block. Phase 2: Generating visual scripts. This prevents timeouts.</div>
-  <div class="lsub" id="lsub">Processing context structures via Gemini 2.0 Flash...</div>
+  <div style="font-size:10px;color:#5c5a78;text-align:center;max-width:280px;">Phase 1: Compiling high-retention narration block. Phase 2: Generating visual scripts. State auto-saved at intervals.</div>
+  <div class="lsub" id="lsub">Processing context structures...</div>
+  <button class="btn btns btnsm" onclick="cancelLoad()" style="margin-top:8px;">✕ Stop Generation</button>
 </div>
 
 <div class="topbar">
-  <div class="logo">Reel<span>Forge</span><small>Pro v3</small></div>
+  <div class="logo">Reel<span>Forge</span><small>Pro v3.5</small></div>
   <div class="srow">
     <span class="dot" id="sdot"></span>
     <span id="stext">System Ready</span>
@@ -143,6 +148,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 </div>
 
 <div class="main">
+
+<!-- CONVERSION WARNING AND RESOLUTION INFOBAR -->
+<div class="model-alert-box" id="modelAlertBox">
+  <div class="model-alert-title">🔄 Engine Model Configuration Altered</div>
+  <div style="font-size:12px;color:#9b99b8;margin-bottom:8px;">You changed your AI engine routing configurations. Your architectural generation state has been preserved automatically. Select execution route:</div>
+  <div class="row">
+    <button class="btn btnp btnsm" onclick="handleModelChangeDecision('continue')">Continue Current Script</button>
+    <button class="btn btns btnsm" onclick="handleModelChangeDecision('new_script')">Generate New Script Only</button>
+    <button class="btn btns btnsm" onclick="handleModelChangeDecision('new_prompts')">Re-Segment Image Prompts Only</button>
+  </div>
+</div>
 
 <div class="pipeline">
   <div class="step active" id="pill1">① Script Engine</div><div class="arr">›</div>
@@ -158,11 +174,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <span class="badge ba" id="badge1">Active</span>
   </div>
 
-  <div style="margin-bottom:12px;">
-    <div style="font-size:11px;color:#5c5a78;margin-bottom:4px;">Google AI Studio API Key</div>
-    <div class="row">
-      <input type="password" id="apiKey" placeholder="AIzaSy... Paste studio developer authentication key here" style="flex:1;" oninput="autoSaveKey(this.value)">
-      <button class="btn btns btnsm" onclick="saveKey()">💾 Lock Key</button>
+  <div class="row" style="margin-bottom:12px;gap:8px;">
+    <div style="flex:2; min-width:200px;">
+      <div style="font-size:11px;color:#5c5a78;margin-bottom:4px;">Google AI Studio API Key</div>
+      <input type="password" id="apiKey" placeholder="AIzaSy... Paste studio developer key here" oninput="autoSaveKey(this.value)">
+    </div>
+    <div style="flex:1; min-width:120px;">
+      <div style="font-size:11px;color:#4ade80;margin-bottom:4px;">Engine Target Model</div>
+      <select id="engineModel" style="width:100%;" onchange="fireModelChangeSequence(this.value)">
+        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+        <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+      </select>
+    </div>
+    <div style="display:flex; align-items:flex-end;">
+      <button class="btn btns" onclick="saveKey()" style="padding:9px 12px;">💾 Lock Configurations</button>
     </div>
   </div>
 
@@ -214,7 +241,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <div class="phase-box">
       <div class="phase-title">Phase 1: Continuous Narration Script Flow (Unfragmented)</div>
       <textarea class="narration-box" id="continuousNarration" onchange="syncContinuousToState(this.value)"></textarea>
-      <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Natural phrasing block. Modifying this recalculates scene layouts during final validation.</div>
+      <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Natural phrasing block. Modifying this recalculates scene layouts during manual execution updates.</div>
     </div>
 
     <div class="row" style="justify-content:space-between;margin-bottom:10px;">
@@ -319,7 +346,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="mlog" id="memoryLog"><div style="font-size:12px;color:#5c5a78;">No personalized system parameters loaded. Injection logs empty.</div></div>
 </div>
 
-<!-- NEW COMPREHENSIVE STEP 4 METADATA GENERATOR CARD -->
+<!-- COMPREHENSIVE STEP 4 METADATA GENERATOR CARD -->
 <div class="card locked" id="card4">
   <div class="ch">
     <div class="ct">④ Integrated High-CTR YouTube Metadata Engine</div>
@@ -348,34 +375,35 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 </div>
 
 <script>
-// CONFIGURATIONS & COMPREHENSIVE STRUCTURAL BOUNDS
+// CONFIGURATIONS & STATE ENGINE BLUEPRINTS
 var API_KEY = '';
+var SELECTED_MODEL = 'gemini-2.0-flash';
 var continuousText = '';
 var scenes = [];
 var memoryRules = [];
-var learnedPatterns = [];
-var voiceUtterance = null;
 var loadingTimer = null;
 var loadingSeconds = 0;
 
-var MIN_DUR = 1.5;            // Scaled down to match high-retention velocity parameters
-var MAX_DUR = 4.0;            // Upper cut parameter cap bound
-var TARGET_AVG_DUR = 2.5;     // Targeted structural baseline cut speed vector
-var MAX_WORDS_PER_SCENE = 8;  // Strict length parameters preventing wordy visual clutter
-var WORDS_PER_SEC = 2.68;     // Experimentally verified speech pace metrics
+var MIN_DUR = 1.5;            
+var MAX_DUR = 4.0;            
+var TARGET_AVG_DUR = 2.5;     
+var MAX_WORDS_PER_SCENE = 8;  
+var WORDS_PER_SEC = 2.68;     
 var isCancelled = false;
 
-// Scaled metrics mapping data requirements to retention paces
 var SCENE_COUNTS = { short: 60, medium: 150, long: 280 };
-var BATCH_SIZE = 25; // Optimized token buffer configuration window
+var BATCH_SIZE = 25; 
 
 (function initApp() {
   try {
     var ver = localStorage.getItem('rf_pro_ver');
-    if(ver !== '3.0') { localStorage.clear(); localStorage.setItem('rf_pro_ver','3.0'); }
+    if(ver !== '3.5') { localStorage.clear(); localStorage.setItem('rf_pro_ver','3.5'); }
     
     var k = localStorage.getItem('rf_apikey');
     if (k) { API_KEY = k; document.getElementById('apiKey').value = k; }
+
+    var m = localStorage.getItem('rf_model');
+    if (m) { SELECTED_MODEL = m; document.getElementById('engineModel').value = m; }
 
     var topic = localStorage.getItem('rf_topic');
     if (topic) document.getElementById('topicInput').value = topic;
@@ -391,19 +419,26 @@ var BATCH_SIZE = 25; // Optimized token buffer configuration window
     var mem = localStorage.getItem('rf_memory');
     if (mem) { memoryRules = JSON.parse(mem); updateMemoryLogView(); }
 
+    // STATE RESTORE ENGINE MAPPING
     var sc = localStorage.getItem('rf_scenes');
     var ct = localStorage.getItem('rf_continuous');
-    if (sc && ct) {
-      scenes = JSON.parse(sc);
-      continuousText = ct;
-      if (scenes.length > 0) {
+    if (sc || ct) {
+      if(ct) {
+        continuousText = ct;
         document.getElementById('continuousNarration').value = continuousText;
-        renderScriptVisualLayout();
-        unlockCardComponent(2);
-        unlockCardComponent(3);
-        unlockCardComponent(4);
-        updatePillTrack(4);
+        document.getElementById('scriptOut').style.display = 'block';
       }
+      if(sc) {
+        scenes = JSON.parse(sc);
+        if(scenes.length > 0) {
+          renderScriptVisualLayout();
+          unlockCardComponent(2);
+          unlockCardComponent(3);
+          unlockCardComponent(4);
+          updatePillTrack(4);
+        }
+      }
+      toastNotification('💾 Automatic runtime backup recovered.');
     }
   } catch(e) {}
 
@@ -412,25 +447,62 @@ var BATCH_SIZE = 25; // Optimized token buffer configuration window
   };
 })();
 
-function autoSaveKey(v) { try { if(v.length>8) localStorage.setItem('rf_apikey', v); } catch(e){} }
-function autoSaveTopic(v) { try { localStorage.setItem('rf_topic', v); } catch(e){} }
+function autoSaveKey(v) { try { if(v.length>8) localStorage.setItem('rf_apikey', v); API_KEY=v; } catch(e){} }
+function autoSaveTopic(v) { try { localStorage.setItem('rf_topic', v); saveGlobalState(); } catch(e){} }
 function autoSaveSettings() {
   try {
     localStorage.setItem('rf_tone', document.getElementById('toneSelect').value);
     localStorage.setItem('rf_lang', document.getElementById('langSelect').value);
     localStorage.setItem('rf_len', document.getElementById('vidLen').value);
     localStorage.setItem('rf_dna', document.getElementById('channelDna').value);
+    saveGlobalState();
   } catch(e){}
 }
 function saveGlobalState() {
   try {
     localStorage.setItem('rf_scenes', JSON.stringify(scenes));
     localStorage.setItem('rf_continuous', continuousText);
+    localStorage.setItem('rf_model', SELECTED_MODEL);
+    
     var b = document.getElementById('savedBadge');
     b.style.display = 'inline';
     clearTimeout(b._t);
     b._t = setTimeout(function(){ b.style.display='none'; }, 2000);
   } catch(e){}
+}
+
+// MODEL CHANGE SEQUENCE CONVERSION PIPELINE
+function fireModelChangeSequence(newModel) {
+  SELECTED_MODEL = newModel;
+  localStorage.setItem('rf_model', SELECTED_MODEL);
+  saveGlobalState();
+  
+  // Display context execution choice interface
+  document.getElementById('modelAlertBox').style.display = 'block';
+  document.getElementById('modelAlertBox').scrollIntoView({behavior: 'smooth'});
+}
+
+function handleModelChangeDecision(decisionRoute) {
+  document.getElementById('modelAlertBox').style.display = 'none';
+  
+  if (decisionRoute === 'continue') {
+    toastNotification('Model updated. Seamless execution state retained.');
+  } else if (decisionRoute === 'new_script') {
+    toastNotification('Resetting pipeline execution context for fresh script build.');
+    scenes = [];
+    continuousText = '';
+    document.getElementById('scriptOut').style.display = 'none';
+    saveGlobalState();
+    generateScriptPipeline();
+  } else if (decisionRoute === 'new_prompts') {
+    if (!continuousText) {
+      toastNotification('No script backbone exists. Building new script infrastructure instead.');
+      generateScriptPipeline();
+      return;
+    }
+    toastNotification('Re-segmenting current narrative block via updated model routing...');
+    reprocessSegmentation();
+  }
 }
 
 function toastNotification(msg) {
@@ -480,15 +552,28 @@ function showLoaderOverlay(title, sub) {
   }, 1000);
 }
 function hideLoaderOverlay(){ clearInterval(loadingTimer); document.getElementById('loadingOverlay').className=''; }
-function cancelLoad(){ isCancelled=true; hideLoaderOverlay(); setStatusIndicator('Transaction Cancelled','err'); }
+function cancelLoad(){ isCancelled=true; hideLoaderOverlay(); setStatusIndicator('Transaction Interrupted','err'); saveGlobalState(); }
 
-// DUAL-PHASE API COMPILATION PIPELINE ENGINE
+function makeGenericApiCall(promptString) {
+  var targetUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + SELECTED_MODEL + ':generateContent?key=' + API_KEY;
+  return fetch(targetUrl, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ contents: [{parts:[{text:promptString}]}], generationConfig: {temperature:0.75, maxOutputTokens:3500} })
+  })
+  .then(function(res){ 
+    if(!res.ok) throw new Error("Server communication routing failure down network pipe.");
+    return res.json(); 
+  });
+}
+
+// PHASE 1: COMPRESSED BLOCK NARRATION CORE BUILDER
 function generateScriptPipeline() {
   var keyInput = document.getElementById('apiKey').value.trim();
   if(keyInput.length>=8) { API_KEY=keyInput; localStorage.setItem('rf_apikey',keyInput); }
-  if(!API_KEY){ showErrorMessage('Valid authentication token needed.'); return; }
+  if(!API_KEY){ showErrorMessage('Valid API developer authentication token required.'); return; }
   var topic = document.getElementById('topicInput').value.trim();
-  if(!topic){ toastNotification('Specify configuration topic parameters'); return; }
+  if(!topic){ toastNotification('Provide topic parameters first.'); return; }
 
   document.getElementById('errBox').className = 'errbox';
   var vidLen = document.getElementById('vidLen').value;
@@ -497,12 +582,11 @@ function generateScriptPipeline() {
   var lang = document.getElementById('langSelect').value;
   var dna = document.getElementById('channelDna').value;
 
-  var memoryContextText = memoryRules.length ? "\nProfile Rule Overrides:\n" + memoryRules.map(function(r){return "- "+r;}).join("\n") : "";
+  var memoryContextText = memoryRules.length ? "\nInjected System Overrides:\n" + memoryRules.map(function(r){return "- "+r;}).join("\n") : "";
 
-  showLoaderOverlay('Phase 1: Compiling Narration Block', 'Generating comprehensive script framework to preserve natural semantic delivery flow...');
-  setStatusIndicator('Compiling Narration...','busy');
+  showLoaderOverlay('Phase 1: Compiling Script Backbone', 'Assembling clean, unfragmented narrative flow tracking ' + SELECTED_MODEL + ' protocols...');
+  setStatusIndicator('Compiling Narration Core...','busy');
 
-  // PHASE 1: GENERATE UNFRAGMENTED SYSTEMIC NARRATION CORE BLOCK
   var phase1Prompt = "You are a professional script architect mapping internal logic blueprints for YouTube educational channels. " +
     "Generate a single, continuous, highly polished UNFRAGMENTED narration text on the topic: '" + topic + "'. " +
     "Channel Format Identity: " + dna + " style voice mechanics. Target Tone: " + tone + ". Language Configuration: " + lang + ". " +
@@ -514,18 +598,14 @@ function generateScriptPipeline() {
     "- The structural end must run an Echo Close formula: the final conceptual statement must echo back to the opening modern hook scene, entirely reframing its context with evolved understanding.\n" +
     memoryContextText + "\nOutput ONLY the plain narration text script. Do not output scene brackets, labels, background suggestions, or technical markup.";
 
-  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+API_KEY, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ contents: [{parts:[{text:phase1Prompt}]}], generationConfig: {temperature:0.8, maxOutputTokens:3500} })
-  })
-  .then(function(res){ return res.json(); })
+  makeGenericApiCall(phase1Prompt)
   .then(function(data){
-    if(!data.candidates || !data.candidates[0]) throw new Error('API Core returned empty structural response blocks.');
+    if(!data.candidates || !data.candidates[0]) throw new Error('API down-stream core returned empty configuration data blocks.');
     continuousText = data.candidates[0].content.parts[0].text.trim();
     document.getElementById('continuousNarration').value = continuousText;
+    document.getElementById('scriptOut').style.display = 'block';
+    saveGlobalState(); // Auto-save phase structural parameters
     
-    // PROGRESS TO PHASE 2: SYSTEMIC SEGMENTATION INTERFACE
     executeSegmentationPhase(targetSceneCount, dna, tone, topic);
   })
   .catch(function(err){
@@ -535,21 +615,21 @@ function generateScriptPipeline() {
   });
 }
 
+// PHASE 2: MOOD COLORS AND VISUAL SLICES COMPILER
 function executeSegmentationPhase(targetSceneCount, dna, tone, topic) {
-  document.getElementById('ltitle').textContent = "Phase 2: Segmenting Visual Fields";
-  document.getElementById('lsub').textContent = "Parsing unfragmented narration block into rapid-cut image prompt sequences maps...";
+  document.getElementById('ltitle').textContent = "Phase 2: Compiling Visual Slices";
+  document.getElementById('lsub').textContent = "Slicing narration block into visual prompt segments using: " + SELECTED_MODEL;
   
   var totalBatchesNeeded = Math.ceil(targetSceneCount / BATCH_SIZE);
   var accumulatedScenes = [];
   var activeBatchIndex = 0;
 
-  // Pre-generate character visual descriptor blueprints
   var charDescriptionAnchor = "Main character designed as a minimal 2D doodle animation, filled circular head layout with simple dark dot eyes and expressive thick black curved eyebrows, linear stick body lines, clean flat fills";
   localStorage.setItem('rf_char_anchor', charDescriptionAnchor + " standing in a neutral reference pose on a solid white color space, bold outlines.");
   document.getElementById('charRefText').textContent = localStorage.getItem('rf_char_anchor');
 
   function compileBatchLoop() {
-    if(isCancelled) return;
+    if(isCancelled) { saveGlobalState(); return; }
     activeBatchIndex++;
     
     var startingSceneId = accumulatedScenes.length + 1;
@@ -557,7 +637,7 @@ function executeSegmentationPhase(targetSceneCount, dna, tone, topic) {
     var batchSizeToFetch = Math.min(BATCH_SIZE, remainingScenesCount);
 
     document.getElementById('batchProg').style.display = 'block';
-    document.getElementById('batchText').textContent = 'Processing visual slices batch ' + activeBatchIndex + ' of ' + totalBatchesNeeded;
+    document.getElementById('batchText').textContent = 'Processing segment batch ' + activeBatchIndex + ' of ' + totalBatchesNeeded;
     document.getElementById('batchBar').style.width = Math.round(((activeBatchIndex - 1) / totalBatchesNeeded) * 100) + '%';
 
     var currentSliceWordsAnchor = continuousText.split(/\s+/).slice(accumulatedScenes.length * 6, (accumulatedScenes.length * 6) + (batchSizeToFetch * 8)).join(" ");
@@ -578,17 +658,12 @@ function executeSegmentationPhase(targetSceneCount, dna, tone, topic) {
       "  * Style Lock configuration: no gradients, no shading layers, no 3D elements, flat color vectors, 16:9 aspect ratio blueprint.\n" +
       "- Character reference link instructions: Integrate " + charDescriptionAnchor + " into every prompt containing actors to ensure framework layout locked consistency.";
 
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+API_KEY, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ contents: [{parts:[{text:phase2Prompt}]}], generationConfig: {temperature:0.7, maxOutputTokens:3200} })
-    })
-    .then(function(res){ return res.json(); })
+    makeGenericApiCall(phase2Prompt)
     .then(function(rawJsonData){
       var rawString = rawJsonData.candidates[0].content.parts[0].text.trim();
       var cleanStart = rawString.indexOf('[');
       var cleanEnd = rawString.lastIndexOf(']');
-      if(cleanStart === -1 || cleanEnd === -1) throw new Error("JSON Array format mismatch returned from server layers.");
+      if(cleanStart === -1 || cleanEnd === -1) throw new Error("JSON framework array mapping error returned from downstream layers.");
       
       var parsedBatchArray = JSON.parse(rawString.slice(cleanStart, cleanEnd + 1));
       
@@ -597,17 +672,20 @@ function executeSegmentationPhase(targetSceneCount, dna, tone, topic) {
         accumulatedScenes.push(sc);
       });
 
+      // Regular runtime intervals trigger local backup storage parameters
+      scenes = accumulatedScenes;
+      saveGlobalState();
+
       if(accumulatedScenes.length < targetSceneCount && activeBatchIndex < totalBatchesNeeded) {
         setTimeout(compileBatchLoop, 1500);
       } else {
         hideLoaderOverlay();
         document.getElementById('batchProg').style.display = 'none';
-        scenes = accumulatedScenes;
         
         var speedSliderVal = parseFloat(document.getElementById('rateSlider').value) || 0.95;
         scenes.forEach(function(s){ s.duration = calculateDurationVector(s.script, speedSliderVal); });
 
-        // AUTOMATED SCENE CONTINUITY HOLD INTEGRATION PATTERN DETECTOR
+        // AUTOMATED HOOK VISUAL RETENTION SEGMENT ANOMALY DETECTOR
         for(var i = 1; i < scenes.length; i++) {
           if(scenes[i].scene_key && scenes[i].scene_key === scenes[i-1].scene_key) {
             scenes[i].isHoldFrame = true;
@@ -622,23 +700,19 @@ function executeSegmentationPhase(targetSceneCount, dna, tone, topic) {
         unlockCardComponent(4);
         updatePillTrack(2);
         
-        setStatusIndicator('System Sequence Verified','');
-        toastNotification('✓ Script compiled successfully across dual-phases!');
+        setStatusIndicator('System Output Stabilized','');
+        toastNotification('✓ Slices compiled successfully via ' + SELECTED_MODEL);
       }
     })
     .catch(function(err){
       hideLoaderOverlay();
-      showErrorMessage("Visual parse failure: " + err.message);
+      showErrorMessage("Visual parsing runtime interruption: " + err.message);
       setStatusIndicator('Phase 2 Error','err');
+      saveGlobalState(); // Retain data generated prior to compilation crash
     });
   }
 
   compileBatchLoop();
-}
-
-function syncContinuousToState(val) {
-  continuousText = val;
-  saveGlobalState();
 }
 
 function reprocessSegmentation() {
@@ -670,7 +744,7 @@ function renderScriptVisualLayout() {
         <span class="wc">${wordCount} words</span>
       </div>
       <textarea class="sscript" rows="2" oninput="liveEditSceneNarration(${idx}, this)">${sc.script || ''}</textarea>
-      <div style="font-size:10px;color:#5c5a78;margin-bottom:2px;">🖼 Production Graphic Instruction Set Matrix:</div>
+      <div style="font-size:10px;color:#5c5a78;margin-bottom:2px;">🖼 Visual Asset Design Mapping Parameters:</div>
       <textarea class="sprompt" rows="3" onchange="scenes[${idx}].imagePrompt=this.value;saveGlobalState();">${sc.imagePrompt || ''}</textarea>
     `;
     container.appendChild(div);
@@ -736,13 +810,13 @@ function compilePromptOutputBoxText() {
 function copyCharacterReference() {
   var ref = localStorage.getItem('rf_char_anchor') || '';
   navigator.clipboard.writeText(ref);
-  toastNotification('Character structural blueprint reference copied.');
+  toastNotification('Consistency model layout copied.');
 }
 
 function copyAllPromptsText() {
   var txt = document.getElementById('promptsContainer').textContent;
   navigator.clipboard.writeText(txt);
-  toastNotification('Graphic prompt stacks synchronized to clipboard.');
+  toastNotification('Graphic prompt configuration sets block synchronized.');
 }
 
 function goToExportStage() {
@@ -764,14 +838,15 @@ function downloadFileElement(filename, text) {
 function downloadNarrationText() {
   downloadFileElement('clean-narration-script.txt', continuousText);
 }
+/* Completely copyable, fully structural text file extraction functions */
 function downloadPromptsText() {
   downloadFileElement('visual-prompt-manifest.txt', document.getElementById('promptsContainer').textContent);
 }
 function downloadTimelineTextFile() {
-  var manifestLines = ["REELFORGE COMPILATION MANIFEST TIMELINE V3\n"];
+  var manifestLines = ["REELFORGE TIMELINE GENERATOR STRATEGY V3.5\n"];
   var currentAccumulator = 0;
   scenes.forEach(function(sc, idx){
-    manifestLines.push("Asset ID: " + String(idx+1).padStart(3,'0') + " | Time Offset: " + currentAccumulator.toFixed(2) + "s | Length: " + sc.duration + "s | Context: " + sc.script);
+    manifestLines.push("Asset ID: " + String(idx+1).padStart(3,'0') + " | Time Vector: " + currentAccumulator.toFixed(2) + "s | Length: " + sc.duration + "s | Text Line: " + sc.script);
     currentAccumulator += sc.duration;
   });
   downloadFileElement('timeline-manifest.txt', manifestLines.join('\n'));
@@ -782,11 +857,11 @@ function downloadAllBundle() {
   setTimeout(downloadTimelineTextFile, 600);
 }
 
-// METADATA PIPELINE ENGINE INTEGRATION BLOCK
+// HIGH-CTR YT METADATA COMPILER INFRASTRUCTURE
 function generateYouTubeMetadataPipeline() {
-  if(!API_KEY) { toastNotification("API authorization vector missing."); return; }
-  setStatusIndicator('Compiling Metadata Matrix...','busy');
-  showLoaderOverlay('Phase 4: Optimization Engine', 'Processing semantic matrix to calculate high-click title variants and structural tags...');
+  if(!API_KEY) { toastNotification("Provide structural developer credentials first."); return; }
+  setStatusIndicator('Compiling Optimization Tags...','busy');
+  showLoaderOverlay('Phase 4: Optimization Manifest', 'Running high-weight click indexing configurations via ' + SELECTED_MODEL + '...');
 
   var metadataPrompt = "You are a professional conversion optimization engineer managing digital media distribution frameworks. " +
     "Analyze the following complete continuous script narration block:\n\n\"" + continuousText + "\"\n\n" +
@@ -795,28 +870,23 @@ function generateYouTubeMetadataPipeline() {
     "Finally, generate a block of 30 hyper-optimized optimized comma-separated semantic search SEO tags.\n\n" +
     "Provide clear, human-readable structural boundaries for: TITLES, DESCRIPTION, and TAGS. Do not output code blocks inside the response sections.";
 
-  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+API_KEY, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ contents: [{parts:[{text:metadataPrompt}]}] })
-  })
-  .then(function(res){ return res.json(); })
+  makeGenericApiCall(metadataPrompt)
   .then(function(data){
     hideLoaderOverlay();
-    setStatusIndicator('Metadata Ready','');
+    setStatusIndicator('Metadata Optimizations Ready','');
     var text = data.candidates[0].content.parts[0].text;
     
-    // Parse optimization categories out
     document.getElementById('metaTitles').textContent = text.slice(0, text.indexOf('DESCRIPTION')) || text;
     document.getElementById('metaDesc').textContent = text.slice(text.indexOf('DESCRIPTION'), text.indexOf('TAGS')) || '';
     document.getElementById('metaTags').textContent = text.slice(text.indexOf('TAGS')) || '';
     
     document.getElementById('metadataOutputBox').style.display = 'block';
-    toastNotification('Metadata optimization generation completed.');
+    saveGlobalState();
+    toastNotification('Metadata optimization block complete.');
   })
   .catch(function(err){
     hideLoaderOverlay();
-    setStatusIndicator('Metadata Error','err');
+    setStatusIndicator('Metadata Generation Interrupted','err');
   });
 }
 
@@ -831,7 +901,7 @@ function applySystemicFeedback() {
 }
 function updateMemoryLogView() {
   var log = document.getElementById('memoryLog');
-  if(!memoryRules.length){ log.innerHTML = '<div style="font-size:12px;color:#5c5a78;">No profile parameter configuration rule blocks injected.</div>'; return; }
+  if(!memoryRules.length){ log.innerHTML = '<div style="font-size:12px;color:#5c5a78;">No profile rule parameter blocks loaded. Injection log empty.</div>'; return; }
   log.innerHTML = memoryRules.map(function(r, i){
     return '<div class="mitem"><span>🧠</span><span style="flex:1;">'+r+'</span><button class="mdel" onclick="deleteMemoryItem('+i+')">✕</button></div>';
   }).join('');
@@ -847,7 +917,7 @@ function clearMemoryLog() {
   updateMemoryLogView();
 }
 
-// SIMULATION Vocal TRACK AUDIO ENGINE PLUGINS
+// AUDITORY RUNTIME 블루프린트 AUDIO SYSTEM PLUGINS
 function previewVoiceEngine() {
   if(!scenes.length || !window.speechSynthesis) return;
   stopVoiceEngine();
@@ -864,16 +934,14 @@ function previewVoiceEngine() {
 function stopVoiceEngine() {
   if(window.speechSynthesis) window.speechSynthesis.cancel();
   var bars = document.getElementById('waveformEl').querySelectorAll('.wbar');
-  bars.forEach(function(b){ b.classList.remove('playing'); b.style.opacity = '0.4'; });
+  bars.forEach(function(b){ bars.forEach(function(b){ b.classList.remove('playing'); b.style.opacity = '0.4'; })});
 }
 function clearAll() {
-  if(!confirm('Purge active visualization matrices state data?')) return;
-  localStorage.removeItem('rf_scenes');
-  localStorage.removeItem('rf_continuous');
+  if(!confirm('Purge visual asset strategy caches and local state mappings completely?')) return;
+  localStorage.clear();
   location.reload();
 }
 
-// Visual simulation initialization calls
 (function generateVisualWaveforms() {
   var wf = document.getElementById('waveformEl'); wf.innerHTML = '';
   for(var i=0; i<65; i++) {
