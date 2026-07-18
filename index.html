@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReelForge Studio Pro v4.5</title>
+<title>ReelForge Studio Pro v4.6</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0a0a0f;color:#f0efff;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
@@ -96,7 +96,7 @@ hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
 </div>
 
 <div class="topbar">
-  <div class="logo">Reel<span>Forge</span><small>Linear Studio v4.5</small></div>
+  <div class="logo">Reel<span>Forge</span><small>Linear Studio v4.6</small></div>
   <div class="srow">
     <span class="dot" id="sdot"></span>
     <span id="stext">System Ready</span>
@@ -163,7 +163,7 @@ hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
   <div class="card" id="card2">
     <div class="ch"><div class="ct">Step 2: Continuous Phrasing Script Flow Core (English Only)</div><span class="badge ba">Script Stage</span></div>
     <textarea class="narration-box" id="continuousNarration" style="min-height:200px;" onchange="syncScriptBoxManualState(this.value)"></textarea>
-    <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Natural phrasing block. Stretched word limits applied to comfortably support a 5-6 minute target threshold.</div>
+    <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Natural phrasing block. The engine expands beyond the initial hook topic to deliver absolute strategic script depth.</div>
     <div class="row mt16" style="justify-content:space-between; width:100%;">
       <button class="btn btns" onclick="triggerRegenerateRestart()" style="color:#fbbf24;">🔄 Save & Restart for New Topic</button>
       <div class="row">
@@ -313,13 +313,13 @@ var MAX_DUR = 4.0;
 var TARGET_AVG_DUR = 2.5;     
 var MAX_WORDS_PER_SCENE = 8;  
 var WORDS_PER_SEC = 2.68;     
-var SCENE_COUNTS = { short: 70, medium: 195, long: 360 }; // Scaled upward to ensure massive script lengths
+var SCENE_COUNTS = { short: 70, medium: 195, long: 360 }; 
 var BATCH_SIZE = 25; 
 
 (function initLinearApp() {
   try {
     var ver = localStorage.getItem('rf_linear_ver');
-    if(ver !== '4.5') { localStorage.clear(); localStorage.setItem('rf_linear_ver','4.5'); }
+    if(ver !== '4.6') { localStorage.clear(); localStorage.setItem('rf_linear_ver','4.6'); }
     
     var k = localStorage.getItem('rf_apikey');
     if (k) { API_KEY = k; document.getElementById('apiKey').value = k; }
@@ -468,7 +468,7 @@ function executeNetworkApiCallPayload(promptText) {
   });
 }
 
-// STEP 1 PIPELINE OPERATION: EXPANDED WORD COUNT COMPILATION
+// STEP 1 PIPELINE OPERATION: EXPANDED WORD COUNT WITH STRATEGIC HOOK ENFORCEMENT
 function executeStep1ScriptCompilation() {
   if(!API_KEY) { showErrorMessage("Valid authentication key configuration required."); return; }
   var topic = document.getElementById('topicInput').value.trim();
@@ -479,19 +479,21 @@ function executeStep1ScriptCompilation() {
   var targetSceneCount = SCENE_COUNTS[vidLen] || 195;
   var dna = document.getElementById('channelDna').value;
 
-  showLoaderOverlay('Executing Step 1: Assembling Expanded Phrasing Script', 'Building long-form unfragmented narration parameters in pure English to easily anchor a full 5-6 minute target scale...');
+  showLoaderOverlay('Executing Step 1: Assembling High-Stakes Script Core', 'Assembling multi-minute continuous narration tracking complex academic, scientific, and behavioral framework layers...');
   setStatusIndicator('Compiling Phrasing Flow...','busy');
 
-  var masterScriptGenerationPrompt = "You are a professional script architect mapping internal logic blueprints for YouTube educational channels. " +
-    "Generate a single, continuous, highly polished, long-form UNFRAGMENTED narration text on the topic: '" + topic + "'. " +
-    "Channel Format Identity: " + dna + " style voice mechanics. Language Configuration: STRICLY PURE ENGLISH ONLY (No Hinglish, no regional slang phrases). " +
-    "Target total script length: exactly " + Math.round(targetSceneCount * 7.5) + " words (Ensure massive depth to comfortably hit a high-retention 5 to 6 minute speaking window layout). " +
-    "\nCRITICAL STRUCTURAL ARCHITECTURE REQUIREMENTS:\n" +
-    "- The script must open with a strict Hook Structure: Scenes 1-2 detail a relatable modern moment experienced by the user. Scene 3 delivers a strict pattern interrupt ('But the truth is far stranger...'). Scene 4 outputs a hard cognitive reframe.\n" +
-    "- You must weave in at least 2-3 specific, real named researchers, historical figures, academic case studies, or institutional research reports by name naturally to build high data authority context.\n" +
-    "- Sentence Rhythm Rule: Enforce an irregular pacing grid: Short punchy sentence. Short sentence. Longer sentence building data depth. Short sentence. Immersive question every 4-6 lines.\n" +
-    "- The structural end must run an Echo Close formula: the final conceptual statement must echo back to the opening modern hook scene, entirely reframing its context with evolved understanding.\n" +
-    "Output ONLY the plain narration text script. Do not output scene brackets, labels, background suggestions, or technical markup.";
+  var masterScriptGenerationPrompt = "You are a world-class documentary script writer for high-retention educational animation channels (Kurzgesagt, Zenn style). " +
+    "Generate a single, continuous, highly sophisticated, long-form UNFRAGMENTED documentary narration text inspired by the core concept: '" + topic + "'. " +
+    "Channel Format Identity: " + dna + " style pacing mechanics. Language Configuration: PURE ENGLISH ONLY. " +
+    "Target total script vocabulary depth: exactly " + Math.round(targetSceneCount * 7.5) + " words. This must be a long, deeply detailed script to support a full 5 to 6 minute video timeline. " +
+    "\nSTRICT SYSTEMIC PLOT AND VOICE STRUCTURE RULES:\n" +
+    "- THE HOOK CONSTRAINT: The first 4-5 sentences must open with a relatable modern digital behavior moment (e.g., scrolling a viral meme, texting 'LOL', checking a busy Discord community server)[cite: 3]. " +
+    "- THE PATTERN INTERRUPT: Immediately following that brief visual modern hook, you must output the exact sentence: 'But the truth is far stranger than a simple digital connection.'[cite: 3] " +
+    "- THE ALTITUDE SHIFT: Directly after the interrupt sentence, deliver the hard cognitive reframe: 'What if I told you that very feeling... isn't a modern phenomenon at all...'[cite: 3] Then, immediately pivot AWAY from internet apps entirely and spend the remaining 95% of the long script diving deeply into the massive universal scientific, psychological, anthropological, or historical reality of the topic[cite: 2, 3]. Do not talk about social media for the rest of the video.\n" +
+    "- NARRATIVE DEPTH: Weave in at least 2-3 specific, real named academic researchers, institutions, scientific studies, or historical figures by name to build immense credibility[cite: 2, 3]. " +
+    "- CADENCE SYSTEM: Write using an irregular sentence grid: Short sentence. Short sentence. Longer sentence building data depth. Short sentence. Immersive question every 5-6 lines[cite: 2, 3]. " +
+    "- ECHO CLOSE: The final closing paragraph must bring the long universal lesson back to mirror the opening digital hook, completely reframing how we look at our modern internet behavior[cite: 2, 3].\n" +
+    "Output ONLY the plain narration script block. Do not output scene indexes, structural labels, drawing suggestions, or backticks.";
 
   executeNetworkApiCallPayload(masterScriptGenerationPrompt)
   .then(function(data){
@@ -602,12 +604,10 @@ function executeStep3ImagePromptsSegmentation() {
       } else {
         hideLoaderOverlay();
         
-        // CALIBRATE PROMPTS STACK TO REAL ELEVENLABS EXPORT DURATION VALUES
         var totalAudioMin = parseInt(document.getElementById('audioMinInput').value) || 5;
         var totalAudioSec = parseInt(document.getElementById('audioSecInput').value) || 30;
         var trueAudioDurationSeconds = (totalAudioMin * 60) + totalAudioSec;
 
-        // Proportional distribution matrix calculations locking timelines to the audio file length
         var baselineRawSum = 0;
         scenes.forEach(function(s) {
           var wordLength = (s.script || '').split(/\s+/).filter(Boolean).length;
@@ -670,6 +670,7 @@ function modifySceneTimeValueManual(idx, val) {
   saveGlobalStateTrack();
 }
 
+// REST OF FILE OPERATIONAL LOGIC PRESERVED
 function copyCharacterReferenceSeed() {
   navigator.clipboard.writeText(localStorage.getItem('rf_char_anchor') || '');
   toastNotification('Character model asset seed copied.');
@@ -684,7 +685,6 @@ function downloadVisualPromptStackTextFile() {
   downloadFileElement('visual-prompts-stack.txt', promptArrayText);
 }
 
-// STEP 4 PIPELINE OPERATION: TIMELINES MANIFEST BUILDER
 function executeStep4TimelineCompilation() {
   reconstructTimelineTextString();
   advanceLinearStep(5);
@@ -719,7 +719,6 @@ function downloadTimelineManifestFileText() {
   downloadFileElement('real-audio-timeline-manifest.txt', document.getElementById('timelineManifestOutputContainer').textContent);
 }
 
-// STEP 5 PIPELINE OPERATION: SEO METADATA PACKAGE INJECTION PIPELINE
 function executeStep5SEOOptimizationPipeline() {
   showLoaderOverlay('Executing Step 5: Processing SEO Optimization Payload', 'Assembling optimized distribution titles, metrics context arrays, and semantic indexing tags...');
   setStatusIndicator('Compiling High-CTR Packaging...','busy');
@@ -758,7 +757,6 @@ function executeStep5SEOOptimizationPipeline() {
   });
 }
 
-// STEP 6 PIPELINE OPERATION: PSYCHOLOGICAL THUMBNAIL CONCEPTS COMPILER
 function executeStep6ThumbnailStrategyPipeline() {
   showLoaderOverlay('Executing Step 6: Processing Thumbnail Visual Psychology', 'Compiling clickable visual blueprints tracking color psychology metrics and focus distribution fields...');
   setStatusIndicator('Compiling Thumbnail Strategy...','busy');
@@ -804,10 +802,9 @@ function triggerRegenerateRestart() {
 }
 
 function previewVoiceEngineSimulation() {
-  if(!completeVocalText || !window.speechSynthesis) return;
+  if(!continuousText || !window.speechSynthesis) return;
   stopVoiceEngineSimulation();
-  var completeVocalText = continuousText;
-  voiceUtterance = new SpeechSynthesisUtterance(completeVocalText);
+  voiceUtterance = new SpeechSynthesisUtterance(continuousText);
   voiceUtterance.rate = parseFloat(document.getElementById('rateSlider').value) || 0.95;
   var bars = document.getElementById('waveformEl').querySelectorAll('.wbar');
   voiceUtterance.onstart = function(){ bars.forEach(function(b){ b.classList.add('playing'); b.style.opacity = '1'; })}
