@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReelForge Pro v3.5</title>
+<title>ReelForge Pro v3.6</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0a0a0f;color:#f0efff;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
@@ -138,7 +138,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 </div>
 
 <div class="topbar">
-  <div class="logo">Reel<span>Forge</span><small>Pro v3.5</small></div>
+  <div class="logo">Reel<span>Forge</span><small>Pro v3.6</small></div>
   <div class="srow">
     <span class="dot" id="sdot"></span>
     <span id="stext">System Ready</span>
@@ -397,7 +397,7 @@ var BATCH_SIZE = 25;
 (function initApp() {
   try {
     var ver = localStorage.getItem('rf_pro_ver');
-    if(ver !== '3.5') { localStorage.clear(); localStorage.setItem('rf_pro_ver','3.5'); }
+    if(ver !== '3.6') { localStorage.clear(); localStorage.setItem('rf_pro_ver','3.6'); }
     
     var k = localStorage.getItem('rf_apikey');
     if (k) { API_KEY = k; document.getElementById('apiKey').value = k; }
@@ -661,11 +661,30 @@ function executeSegmentationPhase(targetSceneCount, dna, tone, topic) {
     makeGenericApiCall(phase2Prompt)
     .then(function(rawJsonData){
       var rawString = rawJsonData.candidates[0].content.parts[0].text.trim();
+      
+      // STRIP OUT COMMON MARKDOWN CODE WRAPS IF PRESENT
+      if (rawString.startsWith("```")) {
+        rawString = rawString.replace(/^```(?:json)?/, "").replace(/```$/, "").trim();
+      }
+      
       var cleanStart = rawString.indexOf('[');
       var cleanEnd = rawString.lastIndexOf(']');
-      if(cleanStart === -1 || cleanEnd === -1) throw new Error("JSON framework array mapping error returned from downstream layers.");
+      if(cleanStart === -1 || cleanEnd === -1) {
+        // FALLBACK: Check if wrapped inside a primary configurations object map
+        cleanStart = rawString.indexOf('{');
+        cleanEnd = rawString.lastIndexOf('}');
+        if (cleanStart === -1) throw new Error("JSON framework array mapping error returned from downstream layers.");
+      }
       
-      var parsedBatchArray = JSON.parse(rawString.slice(cleanStart, cleanEnd + 1));
+      var extractedContent = rawString.slice(cleanStart, cleanEnd + 1);
+      var parsedBatchArray = JSON.parse(extractedContent);
+      
+      if (!Array.isArray(parsedBatchArray) && parsedBatchArray.scenes) {
+        parsedBatchArray = parsedBatchArray.scenes;
+      }
+      if (!Array.isArray(parsedBatchArray)) {
+        parsedBatchArray = [parsedBatchArray];
+      }
       
       parsedBatchArray.forEach(function(sc, idx){
         sc.id = startingSceneId + idx;
@@ -838,12 +857,11 @@ function downloadFileElement(filename, text) {
 function downloadNarrationText() {
   downloadFileElement('clean-narration-script.txt', continuousText);
 }
-/* Completely copyable, fully structural text file extraction functions */
 function downloadPromptsText() {
   downloadFileElement('visual-prompt-manifest.txt', document.getElementById('promptsContainer').textContent);
 }
 function downloadTimelineTextFile() {
-  var manifestLines = ["REELFORGE TIMELINE GENERATOR STRATEGY V3.5\n"];
+  var manifestLines = ["REELFORGE TIMELINE GENERATOR STRATEGY V3.6\n"];
   var currentAccumulator = 0;
   scenes.forEach(function(sc, idx){
     manifestLines.push("Asset ID: " + String(idx+1).padStart(3,'0') + " | Time Vector: " + currentAccumulator.toFixed(2) + "s | Length: " + sc.duration + "s | Text Line: " + sc.script);
@@ -917,7 +935,7 @@ function clearMemoryLog() {
   updateMemoryLogView();
 }
 
-// AUDITORY RUNTIME 블루프린트 AUDIO SYSTEM PLUGINS
+// AUDITORY RUNTIME AUDIO SYSTEM PLUGINS
 function previewVoiceEngine() {
   if(!scenes.length || !window.speechSynthesis) return;
   stopVoiceEngine();
@@ -934,7 +952,7 @@ function previewVoiceEngine() {
 function stopVoiceEngine() {
   if(window.speechSynthesis) window.speechSynthesis.cancel();
   var bars = document.getElementById('waveformEl').querySelectorAll('.wbar');
-  bars.forEach(function(b){ bars.forEach(function(b){ b.classList.remove('playing'); b.style.opacity = '0.4'; })});
+  bars.forEach(function(b){ b.classList.remove('playing'); b.style.opacity = '0.4'; });
 }
 function clearAll() {
   if(!confirm('Purge visual asset strategy caches and local state mappings completely?')) return;
