@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReelForge Studio Pro v4.0</title>
+<title>ReelForge Studio Pro v4.5</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0a0a0f;color:#f0efff;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
@@ -60,7 +60,7 @@ textarea::placeholder,input::placeholder{color:#5c5a78;}
 .t-hook{background:rgba(251,191,36,.12);color:#fbbf24;}
 .t-main{background:rgba(96,165,250,.1);color:#60a5fa;}
 .durbadge{display:flex;align-items:center;gap:3px;font-size:10px;color:#4ade80;background:#22222f;border:1px solid #2a2a3a;border-radius:4px;padding:2px 6px;font-family:monospace;}
-.durbadge input{width:24px;background:transparent;border:none;outline:none;color:#4ade80;font-family:monospace;font-size:10px;text-align:center;}
+.durbadge input{width:26px;background:transparent;border:none;outline:none;color:#4ade80;font-family:monospace;font-size:10px;text-align:center;}
 .wc{font-size:10px;color:#5c5a78;font-family:monospace;margin-left:auto;}
 
 /* WAVEFORM SOUND ENGINE SIMULATOR */
@@ -96,7 +96,7 @@ hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
 </div>
 
 <div class="topbar">
-  <div class="logo">Reel<span>Forge</span><small>Linear Studio v4.0</small></div>
+  <div class="logo">Reel<span>Forge</span><small>Linear Studio v4.5</small></div>
   <div class="srow">
     <span class="dot" id="sdot"></span>
     <span id="stext">System Ready</span>
@@ -144,9 +144,9 @@ hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
         <option value="science">🔬 Science Explainer (High-Pace Deductive)</option>
       </select>
       <select id="vidLen" onchange="autoSaveSettings()">
-        <option value="short">Short (60 Beats ~1.5 - 2.5 min)</option>
-        <option value="medium" selected>Medium (150 Beats ~5 - 6 min)</option>
-        <option value="long">Long (280 Beats ~10 - 12 min)</option>
+        <option value="short">Short (70 Beats ~2 - 3 min)</option>
+        <option value="medium" selected>Medium (195 Beats ~5 - 6 min)</option>
+        <option value="long">Long (360 Beats ~11 - 13 min)</option>
       </select>
     </div>
     <div class="errbox" id="errBox"></div>
@@ -161,9 +161,9 @@ hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
 
   <!-- STEP 2 CARD: CONTINUOUS UNFRAGMENTED SCRIPT CORE FLOW -->
   <div class="card" id="card2">
-    <div class="ch"><div class="ct">Step 2: Continuous Phrasing Script Flow Core</div><span class="badge ba">Script Stage</span></div>
+    <div class="ch"><div class="ct">Step 2: Continuous Phrasing Script Flow Core (English Only)</div><span class="badge ba">Script Stage</span></div>
     <textarea class="narration-box" id="continuousNarration" style="min-height:200px;" onchange="syncScriptBoxManualState(this.value)"></textarea>
-    <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Natural phrasing block. You can manually edit the text inside this container before advancing components.</div>
+    <div style="font-size:11px;color:#5c5a78;margin-top:4px;">Natural phrasing block. Stretched word limits applied to comfortably support a 5-6 minute target threshold.</div>
     <div class="row mt16" style="justify-content:space-between; width:100%;">
       <button class="btn btns" onclick="triggerRegenerateRestart()" style="color:#fbbf24;">🔄 Save & Restart for New Topic</button>
       <div class="row">
@@ -177,10 +177,27 @@ hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
   <div class="card" id="card3">
     <div class="ch"><div class="ct">Step 3: Vocal Audio Production Track Sync</div><span class="badge ba">Audio Stage</span></div>
     <div style="font-size:13px;color:#9b99b8;margin-bottom:12px;">Copy the phrasing architecture block below, pass it straight into **ElevenLabs**, execute your generation, download the output vocal wave track, and then return here to click continue.</div>
-    <div class="row style=\"margin-bottom:12px;\">
+    <div class="row" style="margin-bottom:12px;">
       <button class="btn btna btnsm" onclick="copyAudioScriptTextToClipboard()">📋 Copy Phrased Text Block for ElevenLabs</button>
       <button class="btn btns btnsm" onclick="downloadAudioScriptTextFile()">⬇ Download Script Text (.txt)</button>
     </div>
+    
+    <!-- DYNAMIC AUDIO RUNTIME OVERRIDE INPUT ENGINE -->
+    <div style="background:#161622; padding:12px; border-radius:8px; margin-bottom:14px; border:1px solid #2b2b3d;">
+      <div style="font-size:12px; color:#4ade80; font-weight:700; margin-bottom:6px;">⏱ True Audio Sync Calibration Overlay</div>
+      <div style="font-size:11px; color:#9b99b8; margin-bottom:8px;">Once you generate your audio file inside ElevenLabs, check its exact duration length and paste it below. ReelForge will mathematically adjust all visual scene prompts and downstream execution timelines to lock perfectly onto your file layout.</div>
+      <div class="row" style="gap:10px;">
+        <div style="flex:1;">
+          <span style="font-size:11px; color:#5c5a78;">Total Audio Minutes</span>
+          <input type="number" id="audioMinInput" min="0" value="5" placeholder="Min">
+        </div>
+        <div style="flex:1;">
+          <span style="font-size:11px; color:#5c5a78;">Total Audio Seconds</span>
+          <input type="number" id="audioSecInput" min="0" max="59" value="30" placeholder="Sec">
+        </div>
+      </div>
+    </div>
+
     <div style="margin-top:14px;background:#0d0d14;padding:12px;border-radius:8px;border:1px solid #1e1e2a;">
       <div style="font-size:11px;color:#9b99b8;margin-bottom:6px;">🔊 Auditory Voice Simulation System Preview</div>
       <div class="row" style="gap:8px;">
@@ -270,7 +287,7 @@ hr{border:none;border-top:1px solid #1e1e2a;margin:14px 0;}
   <!-- STEP 7 CARD: PSYCHOLOGICAL THUMBNAIL CONCEPTS STRATEGY DEPLOYMENT -->
   <div class="card" id="card7">
     <div class="ch"><div class="ct">Step 7: Thumbnail Visual Psychology & Concept Framing Strategy</div><span class="badge ba">Thumbnail Stage</span></div>
-    <div style="font-size:12px;color:#9b99b8;margin-bottom:12px;">Clickable graphic blueprints engineered explicitly around structural color psychology, strict text limits, and optimized formats to lock browsing attention parameters.</div>
+    <div style="font-size:12px;color:#9b99b8;margin-bottom:12px;">Clickable graphic blueprints engineered explicitly around structural color psychology, text limits, and optimized formats to lock browsing attention parameters.</div>
     <div class="display-block-box" id="thumbnailStrategyOutputContainer" style="line-height:1.8; color:#a8fdc2;"></div>
     <div class="row mt16" style="justify-content:space-between; width:100%;">
       <div style="font-size:12px; color:#5c5a78; display:flex; align-items:center;">✓ Linear Workflow Loop Complete</div>
@@ -296,13 +313,13 @@ var MAX_DUR = 4.0;
 var TARGET_AVG_DUR = 2.5;     
 var MAX_WORDS_PER_SCENE = 8;  
 var WORDS_PER_SEC = 2.68;     
-var SCENE_COUNTS = { short: 60, medium: 150, long: 280 };
+var SCENE_COUNTS = { short: 70, medium: 195, long: 360 }; // Scaled upward to ensure massive script lengths
 var BATCH_SIZE = 25; 
 
 (function initLinearApp() {
   try {
     var ver = localStorage.getItem('rf_linear_ver');
-    if(ver !== '4.0') { localStorage.clear(); localStorage.setItem('rf_linear_ver','4.0'); }
+    if(ver !== '4.5') { localStorage.clear(); localStorage.setItem('rf_linear_ver','4.5'); }
     
     var k = localStorage.getItem('rf_apikey');
     if (k) { API_KEY = k; document.getElementById('apiKey').value = k; }
@@ -315,7 +332,6 @@ var BATCH_SIZE = 25;
     var dna = localStorage.getItem('rf_dna');
     if (dna) document.getElementById('channelDna').value = dna;
 
-    // STATE PARSING AUTOMATIC BACKUP RESTORER
     var stepBackup = localStorage.getItem('rf_linear_step');
     var ctBackup = localStorage.getItem('rf_continuous');
     var scBackup = localStorage.getItem('rf_scenes');
@@ -330,7 +346,6 @@ var BATCH_SIZE = 25;
     }
     if (stepBackup) {
       var targetStep = parseInt(stepBackup) || 1;
-      // Recompute outputs for views elements depending on recovery depth
       if (scenes.length > 0) {
         renderScriptVisualLayoutGrid();
         reconstructTimelineTextString();
@@ -377,24 +392,21 @@ function saveGlobalStateTrack() {
 function changeModelConfiguration(newModel) {
   SELECTED_MODEL = newModel;
   saveGlobalStateTrack();
-  toastNotification('Engine model configurations modified to: ' + newModel + '. Previous step parameters retained.');
+  toastNotification('Engine model configurations modified to: ' + newModel);
 }
 
 function advanceLinearStep(stepNumber) {
   currentLinearStep = stepNumber;
   localStorage.setItem('rf_linear_step', currentLinearStep);
   
-  // Hide all step layout panels
   for (var i = 1; i <= 7; i++) {
     var card = document.getElementById('card' + i);
     if(card) card.classList.remove('visible');
   }
   
-  // Show target linear layout card
   var activeCard = document.getElementById('card' + stepNumber);
   if(activeCard) activeCard.classList.add('visible');
   
-  // Synchronize top progress track pills display state
   for (var i = 1; i <= 7; i++) {
     var pill = document.getElementById('pill' + i);
     if (pill) {
@@ -456,7 +468,7 @@ function executeNetworkApiCallPayload(promptText) {
   });
 }
 
-// STEP 1 PIPELINE OPERATION: SCRIPT COMPILATION FLOW
+// STEP 1 PIPELINE OPERATION: EXPANDED WORD COUNT COMPILATION
 function executeStep1ScriptCompilation() {
   if(!API_KEY) { showErrorMessage("Valid authentication key configuration required."); return; }
   var topic = document.getElementById('topicInput').value.trim();
@@ -464,16 +476,16 @@ function executeStep1ScriptCompilation() {
   
   document.getElementById('errBox').className = 'errbox';
   var vidLen = document.getElementById('vidLen').value;
-  var targetSceneCount = SCENE_COUNTS[vidLen] || 150;
+  var targetSceneCount = SCENE_COUNTS[vidLen] || 195;
   var dna = document.getElementById('channelDna').value;
 
-  showLoaderOverlay('Executing Step 1: Compiling Phrasing Script Flow', 'Building complete continuous unfragmented narration parameters tracking channel DNA profiles...');
+  showLoaderOverlay('Executing Step 1: Assembling Expanded Phrasing Script', 'Building long-form unfragmented narration parameters in pure English to easily anchor a full 5-6 minute target scale...');
   setStatusIndicator('Compiling Phrasing Flow...','busy');
 
-  var masterScriptGenerationPrompt = "You are a specialized script architect mapping internal logic blueprints for YouTube educational channels. " +
-    "Generate a single, continuous, highly polished UNFRAGMENTED narration text on the topic: '" + topic + "'. " +
-    "Channel Format Identity: " + dna + " style voice mechanics. Language Configuration: Hinglish conversational workflow structure. " +
-    "Total target vocabulary size: approximately " + Math.round(targetSceneCount * 5.5) + " words. " +
+  var masterScriptGenerationPrompt = "You are a professional script architect mapping internal logic blueprints for YouTube educational channels. " +
+    "Generate a single, continuous, highly polished, long-form UNFRAGMENTED narration text on the topic: '" + topic + "'. " +
+    "Channel Format Identity: " + dna + " style voice mechanics. Language Configuration: STRICLY PURE ENGLISH ONLY (No Hinglish, no regional slang phrases). " +
+    "Target total script length: exactly " + Math.round(targetSceneCount * 7.5) + " words (Ensure massive depth to comfortably hit a high-retention 5 to 6 minute speaking window layout). " +
     "\nCRITICAL STRUCTURAL ARCHITECTURE REQUIREMENTS:\n" +
     "- The script must open with a strict Hook Structure: Scenes 1-2 detail a relatable modern moment experienced by the user. Scene 3 delivers a strict pattern interrupt ('But the truth is far stranger...'). Scene 4 outputs a hard cognitive reframe.\n" +
     "- You must weave in at least 2-3 specific, real named researchers, historical figures, academic case studies, or institutional research reports by name naturally to build high data authority context.\n" +
@@ -508,19 +520,19 @@ function syncScriptBoxManualState(val) {
 
 function copyAudioScriptTextToClipboard() {
   navigator.clipboard.writeText(continuousText);
-  toastNotification('Clean narration copied. Paste track directly into ElevenLabs engine.');
+  toastNotification('Clean narration script copied.');
 }
 function downloadAudioScriptTextFile() {
-  downloadFileElement('elevenlabs-narration-script.txt', continuousText);
+  downloadFileElement('longform-narration-script.txt', continuousText);
 }
 
-// STEP 3 PIPELINE OPERATION: IMAGE SLICES SEGMENTATION STACK BUILDER
+// STEP 3 PIPELINE OPERATION: COMPRESSED IMAGES STACK SEGMENTER
 function executeStep3ImagePromptsSegmentation() {
   var vidLen = document.getElementById('vidLen').value;
-  var targetSceneCount = SCENE_COUNTS[vidLen] || 150;
+  var targetSceneCount = SCENE_COUNTS[vidLen] || 195;
   var dna = document.getElementById('channelDna').value;
 
-  showLoaderOverlay('Executing Step 3: Compiling Slices Framework', 'Segmenting clean narration block into strict high-retention image prompt matrices via ' + SELECTED_MODEL);
+  showLoaderOverlay('Executing Step 3: Compiling Slices Framework', 'Segmenting expanded script architecture block into highly dynamic image prompt manifests via ' + SELECTED_MODEL);
   setStatusIndicator('Compiling Prompt Manifest...','busy');
 
   var totalBatchesNeeded = Math.ceil(targetSceneCount / BATCH_SIZE);
@@ -539,7 +551,7 @@ function executeStep3ImagePromptsSegmentation() {
     var remainingScenesCount = targetSceneCount - accumulatedScenes.length;
     var batchSizeToFetch = Math.min(BATCH_SIZE, remainingScenesCount);
 
-    var currentSliceWordsAnchor = continuousText.split(/\s+/).slice(accumulatedScenes.length * 6, (accumulatedScenes.length * 6) + (batchSizeToFetch * 8)).join(" ");
+    var currentSliceWordsAnchor = continuousText.split(/\s+/).slice(accumulatedScenes.length * 7, (accumulatedScenes.length * 7) + (batchSizeToFetch * 9)).join(" ");
 
     var segmentationPromptString = "You are a visual continuity systems director. Split the following narration script snippet into EXACTLY " + batchSizeToFetch + " scene segmentation blocks starting at ID: " + startingSceneId + ".\n" +
       "Snippet Text Context:\n\"" + currentSliceWordsAnchor + "\"\n\n" +
@@ -590,7 +602,24 @@ function executeStep3ImagePromptsSegmentation() {
       } else {
         hideLoaderOverlay();
         
-        scenes.forEach(function(s){ s.duration = Math.max(MIN_DUR, Math.min(MAX_DUR, Math.ceil((s.script||'').split(/\s+/).filter(Boolean).length / WORDS_PER_SEC))); });
+        // CALIBRATE PROMPTS STACK TO REAL ELEVENLABS EXPORT DURATION VALUES
+        var totalAudioMin = parseInt(document.getElementById('audioMinInput').value) || 5;
+        var totalAudioSec = parseInt(document.getElementById('audioSecInput').value) || 30;
+        var trueAudioDurationSeconds = (totalAudioMin * 60) + totalAudioSec;
+
+        // Proportional distribution matrix calculations locking timelines to the audio file length
+        var baselineRawSum = 0;
+        scenes.forEach(function(s) {
+          var wordLength = (s.script || '').split(/\s+/).filter(Boolean).length;
+          s.rawWeight = wordLength || 4; 
+          baselineRawSum += s.rawWeight;
+        });
+
+        scenes.forEach(function(s) {
+          var allocatedDuration = (s.rawWeight / baselineRawSum) * trueAudioDurationSeconds;
+          s.duration = Math.max(MIN_DUR, Math.min(MAX_DUR, parseFloat(allocatedDuration.toFixed(1))));
+        });
+
         for(var i = 1; i < scenes.length; i++) {
           if(scenes[i].scene_key && scenes[i].scene_key === scenes[i-1].scene_key) scenes[i].isHoldFrame = true;
         }
@@ -627,7 +656,7 @@ function renderScriptVisualLayoutGrid() {
         <span class="snum">Beat #${sc.id}</span>
         <span class="stag ${labelClasses[sc.type] || 't-main'}">${sc.type.toUpperCase()}</span>
         ${holdBadgeText}
-        <div class="durbadge">⏱<input type="number" value="${sc.duration}" step="0.5" onchange="modifySceneTimeValueManual(${idx}, this.value)">s</div>
+        <div class="durbadge">⏱<input type="number" value="${sc.duration}" step="0.1" onchange="modifySceneTimeValueManual(${idx}, this.value)">s</div>
       </div>
       <div style="font-size:13px; color:#fff; margin-bottom:6px; background:#0d0d14; padding:6px; border-radius:4px;">${sc.script}</div>
       <textarea class="sprompt" rows="2" onchange="scenes[${idx}].imagePrompt=this.value;saveGlobalStateTrack();">${sc.imagePrompt || ''}</textarea>
@@ -662,7 +691,7 @@ function executeStep4TimelineCompilation() {
 }
 
 function reconstructTimelineTextString() {
-  var timelineLines = ["REELFORGE STUDIOS TIMELINE MATRIX Blueprints\n"];
+  var timelineLines = ["REELFORGE STUDIOS REAL-AUDIO CALIBRATED TIMELINE Blueprints\n"];
   var currentAccumulator = 0;
   scenes.forEach(function(sc, idx){
     var startMin = Math.floor(currentAccumulator / 60);
@@ -671,9 +700,9 @@ function reconstructTimelineTextString() {
     var endMin = Math.floor(currentAccumulator / 60);
     var endSec = Math.floor(currentAccumulator % 60);
 
-    var matrixHeader = "IMG TRACK asset " + String(idx+1).padStart(3,'0') + " | Mapped Time: " + 
+    var matrixHeader = "IMG TRACK asset " + String(idx+1).padStart(3,'0') + " | Calibrated Offset: " + 
                      startMin + ":" + String(startSec).padStart(2,'0') + " → " + 
-                     endMin + ":" + String(endSec).padStart(2,'0') + " (" + sc.duration + "s) | Action Beat: " + sc.script;
+                     endMin + ":" + String(endSec).padStart(2,'0') + " (" + sc.duration.toFixed(1) + "s) | Action Beat: " + sc.script;
     timelineLines.push(matrixHeader);
   });
   
@@ -687,7 +716,7 @@ function copyTimelineManifestTextToClipboard() {
   toastNotification('Timeline structural maps synchronization vector verified.');
 }
 function downloadTimelineManifestFileText() {
-  downloadFileElement('video-editor-timeline-manifest.txt', document.getElementById('timelineManifestOutputContainer').textContent);
+  downloadFileElement('real-audio-timeline-manifest.txt', document.getElementById('timelineManifestOutputContainer').textContent);
 }
 
 // STEP 5 PIPELINE OPERATION: SEO METADATA PACKAGE INJECTION PIPELINE
@@ -731,7 +760,7 @@ function executeStep5SEOOptimizationPipeline() {
 
 // STEP 6 PIPELINE OPERATION: PSYCHOLOGICAL THUMBNAIL CONCEPTS COMPILER
 function executeStep6ThumbnailStrategyPipeline() {
-  showLoaderOverlay('Executing Step 6: Processing Thumbnail Visual Psychology', 'Compiling clickable visual blue prints tracking color psychology metrics and focus distribution fields...');
+  showLoaderOverlay('Executing Step 6: Processing Thumbnail Visual Psychology', 'Compiling clickable visual blueprints tracking color psychology metrics and focus distribution fields...');
   setStatusIndicator('Compiling Thumbnail Strategy...','busy');
 
   var thumbnailStrategyPrompt = "You are an expert digital graphics art director analyzing content conversion architecture. " +
@@ -769,15 +798,16 @@ function downloadFileElement(filename, text) {
 }
 
 function triggerRegenerateRestart() {
-  if(!confirm('Save current pipeline tracking arrays data metrics and purge state history to restart for a fresh configuration topic?')) return;
+  if(!confirm('Purge active visualization matrices data history to restart for a fresh configuration topic?')) return;
   localStorage.clear();
   location.reload();
 }
 
 function previewVoiceEngineSimulation() {
-  if(!continuousText || !window.speechSynthesis) return;
+  if(!completeVocalText || !window.speechSynthesis) return;
   stopVoiceEngineSimulation();
-  voiceUtterance = new SpeechSynthesisUtterance(continuousText);
+  var completeVocalText = continuousText;
+  voiceUtterance = new SpeechSynthesisUtterance(completeVocalText);
   voiceUtterance.rate = parseFloat(document.getElementById('rateSlider').value) || 0.95;
   var bars = document.getElementById('waveformEl').querySelectorAll('.wbar');
   voiceUtterance.onstart = function(){ bars.forEach(function(b){ b.classList.add('playing'); b.style.opacity = '1'; })}
