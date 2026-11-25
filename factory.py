@@ -16,6 +16,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 STUDIO = os.path.join(ROOT, "3d-video-studio")
 ENGINE = os.path.join(STUDIO, "engine")
 PIPE = os.path.join(ROOT, "pipeline")
+if not os.path.isdir(PIPE):
+    PIPE = ROOT  # files uploaded flat, without a pipeline/ folder
 PROJ = os.path.join(STUDIO, "project_out")
 MODELS = os.path.join(ROOT, "models")
 DURATION = 30.0
@@ -162,7 +164,7 @@ def story_prompt(topic):
     return f"""You write 30-second funny YouTube Shorts: a FAKE comic origin story for an everyday invention.
 Topic: "{topic}"
 
-Story formula: a bold SCHEMER (the hero we want to see caught) exploits a loophole, gets rich, gets greedy, and is beaten by a QUIET victim who just uses the INVENTION. The last sentence names it.
+Story formula: a bold SCHEMER named Rex (the one we want to see caught) exploits a loophole, gets rich, gets greedy, and is beaten by a QUIET victim named Sam who just uses the INVENTION. The last sentence names it. Always use the names Rex and Sam, never "he" for the first mention.
 
 Return ONLY one JSON object (no markdown) with exactly these keys:
 {{
@@ -178,15 +180,15 @@ Return ONLY one JSON object (no markdown) with exactly these keys:
  "viewLines": [exactly 3 short uppercase lines, max 20 chars each: what the invention shows, the last line is the damning one]
 }}
 
-The 8 sentences, one per beat, total 78 to 90 words, each 8 to 16 words:
-1 HOOK: past tense, the schemer does something bold and a person suffers the result.
+The 8 sentences, one per beat, total 64 to 76 words, each 7 to 12 words (it is read aloud calmly in 30 seconds):
+1 HOOK: past tense, Rex does something bold and a person suffers the result.
 2 LOOPHOLE: the fake-out plus the rule he figured he could exploit.
 3 PAYOFF: it works; the funniest reward comes last.
 4 GREED: he repeats it again and again and gets absurdly rich.
-5 QUIET VICTIM: one quiet, ordinary person does the same trick on them but calmly uses a humble object (do not name the invention yet, call it a little thing).
-6 REVEAL OF THE VIEW: the schemer tries it, the little thing shows exactly what really happened.
-7 JUSTICE: an authority looks at it and the schemer pays everything back.
-8 TAG: exactly: And that's how the <invention> was invented.
+5 QUIET VICTIM: Sam, a quiet ordinary person, calmly uses a humble object (do not name the invention yet, call it a little thing).
+6 REVEAL OF THE VIEW: Rex tries his trick again, the little thing shows exactly what really happened.
+7 JUSTICE: it MUST say "the judge" and "court": the judge looks at it in court and Rex pays everything back.
+8 TAG: exactly: And that's how the <invention in lowercase> was invented.
 
 Style: short everyday words, deadpan, specific small details, forward-driving openers (He, Then, So, Until, But). Real-world cartoonish scheme only, no step-by-step fraud, no real companies or people. No quotes, emojis, dashes or semicolons inside sentences."""
 
@@ -200,9 +202,15 @@ def parse_story(raw, topic):
     if not (7 <= len(sents) <= 9):
         raise ValueError(f"need 8 sentences, got {len(sents)}")
     words = sum(len(s.split()) for s in sents)
-    if not (60 <= words <= 105):
-        raise ValueError(f"script has {words} words, need 60-105")
+    if not (55 <= words <= 90):
+        raise ValueError(f"script has {words} words, need 55-90")
+    joined = " ".join(sents)
+    if "Rex" not in joined or "Sam" not in joined:
+        raise ValueError("characters must be named Rex and Sam")
+    if not re.search(r"\bjudge\b", " ".join(sents[-3:-1]), re.I):
+        raise ValueError("the justice sentence must mention the judge")
     inv = short_caps(d.get("invention", ""), 12, "INVENTION")
+    sents[-1] = f"And that's how the {inv.lower()} was invented."
     hero = d.get("hero") if d.get("hero") in HEROES else "camBox"
     place = d.get("place") if d.get("place") in PLACES else "shop"
     scheme = d.get("schemeText") or ["NO PROOF"]
@@ -244,7 +252,7 @@ def make_story(topic, story_file):
     last = None
     for attempt in range(4):
         try:
-            raw = groq_chat(story_prompt(topic) + ("\nRemember: JSON only, exactly 8 sentences, 78-90 words in total." if attempt else ""))
+            raw = groq_chat(story_prompt(topic) + ("\nRemember: JSON only, exactly 8 sentences, 64-76 words in total, use the names Rex and Sam, and mention the judge and the court." if attempt else ""))
             return parse_story(raw, topic)
         except Exception as e:
             last = e
@@ -303,7 +311,7 @@ async def _edge_one(text, voice, mp3):
 
 def engine_edge(tmp):
     import asyncio
-    voices = ["en-US-GuyNeural", "en-US-AndrewMultilingualNeural"]
+    voices = ["en-US-AndrewMultilingualNeural", "en-US-BrianMultilingualNeural", "en-US-GuyNeural"]
     state = {"voice": None}
 
     def synth(text, i):
@@ -438,188 +446,4 @@ def setup_project(story, words, starts):
          "--cars", "schemer,quiet,traffic"])
     story = dict(story)
     story["starts"] = starts
-    story["seed"] = random.randint(1, 9999)
-    with open(os.path.join(PROJ, "story.json"), "w") as f:
-        json.dump(story, f, indent=1)
-    with open(os.path.join(PROJ, "audio", "vo.words.json"), "w") as f:
-        json.dump(words, f)                                     # array of {"w","s","e"} objects, as captions.js requires
-    src = "dashcam_video.js" if story.get("kit") == "dashcam" else "story_video.js"
-    shutil.copy(os.path.join(PIPE, src), os.path.join(PROJ, "video.js"))
-
-
-def check_engine_assets():
-    need = [os.path.join(ENGINE, "node_modules", "three", "build", "three.module.js"),
-            os.path.join(ENGINE, "node_modules", "@fontsource", "poppins", "files", "poppins-latin-800-normal.woff2"),
-            os.path.join(STUDIO, "kit", "node_modules", "playwright", "package.json")]
-    missing = [p for p in need if not os.path.isfile(p)]
-    if missing:
-        raise RuntimeError("engine dependencies missing (npm install step failed?):\n" + "\n".join(missing))
-
-
-def mean_luma(path, t):
-    """Average brightness (0-255) of one frame; ~0 means the 3D view rendered black."""
-    r = subprocess.run(["ffmpeg", "-v", "error", "-ss", str(max(0.0, t)), "-i", path, "-frames:v", "1",
-                        "-vf", "scale=64:114,format=gray", "-f", "rawvideo", "-"], capture_output=True)
-    return (sum(r.stdout) / len(r.stdout)) if r.stdout else 0.0
-
-
-def part_ok(path, length):
-    try:
-        if probe_duration(path) < length - 0.2:
-            return False
-        times = [0.4, length / 2, length - 0.4]
-        lumas = [mean_luma(path, t) for t in times]
-        log(f"  brightness of {os.path.basename(path)}: " + ", ".join(f"{x:.0f}" for x in lumas))
-        return min(lumas) > 12
-    except Exception as e:
-        log("  part check failed:", e)
-        return False
-
-
-def render_video(parts):
-    out = os.path.join(PROJ, "out")
-    env = dict(os.environ, GL="swiftshader")
-    chunk = DURATION / parts
-    jobs = [(i, round(i * chunk, 3), round((i + 1) * chunk, 3), os.path.join(out, f"part{i}.mp4")) for i in range(parts)]
-    workers = int(os.environ.get("RENDER_WORKERS", max(1, min(parts, (os.cpu_count() or 2) // 2))))
-
-    def launch(job):
-        i, a, b, dst = job
-        log(f"rendering part {i}: {a}s to {b}s")
-        lf = open(os.path.join(out, f"part{i}.log"), "w")
-        return subprocess.Popen(["node", os.path.join(ENGINE, "film.mjs"), "render", PROJ, dst, str(a), str(b)],
-                                env=env, stdout=lf, stderr=subprocess.STDOUT)
-
-    for attempt in range(3):
-        todo = [j for j in jobs if not os.path.isfile(j[3])]
-        if not todo:
-            break
-        w = workers if attempt == 0 else 1          # retry one at a time: parallel browsers can come out black
-        log(f"render pass {attempt + 1}: {len(todo)} part(s), {w} at a time")
-        for k in range(0, len(todo), w):
-            batch = [(j, launch(j)) for j in todo[k:k + w]]
-            for j, p in batch:
-                rc = p.wait()
-                if rc != 0:
-                    log(f"part {j[0]} failed (exit {rc}); last log lines:")
-                    log("".join(open(os.path.join(out, f"part{j[0]}.log")).readlines()[-12:]))
-                for stale in (j[3].replace(".mp4", ".part.mp4"),):
-                    if os.path.exists(stale):
-                        os.remove(stale)
-                if rc != 0 or not os.path.isfile(j[3]) or not part_ok(j[3], j[2] - j[1]):
-                    log(f"part {j[0]} is bad; it will be rendered again")
-                    if os.path.exists(j[3]):
-                        os.remove(j[3])
-    bad = [j[0] for j in jobs if not os.path.isfile(j[3])]
-    if bad:
-        raise RuntimeError(f"render failed for parts {bad}")
-    lst = os.path.join(out, "parts.txt")
-    with open(lst, "w") as f:
-        for j in jobs:
-            f.write(f"file '{j[3]}'\n")
-    silent = os.path.join(out, "silent.mp4")
-    run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", silent])
-    dark = [t for t in range(1, int(DURATION) - 1, 3) if mean_luma(silent, t + 0.5) < 12]
-    if dark:
-        raise RuntimeError(f"final video has black frames around {dark} s")
-    return silent
-
-
-def render_stills(times):
-    env = dict(os.environ, GL="swiftshader")
-    run(["node", os.path.join(ENGINE, "film.mjs"), "stills", PROJ, os.path.join(PROJ, "stills")] + [str(t) for t in times], env=env)
-
-
-def mux(silent):
-    out = os.path.join(PROJ, "out")
-    final = os.path.join(out, "final_short.mp4")
-    for crf in (23, 27, 31):
-        run(["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", os.path.join(PROJ, "audio", "vo.wav"),
-             "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-crf", str(crf), "-preset", "medium", "-pix_fmt", "yuv420p",
-             "-c:a", "aac", "-b:a", "160k", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-shortest", "-movflags", "+faststart", final])
-        mb = os.path.getsize(final) / 1e6
-        log(f"final_short.mp4 crf {crf}: {mb:.1f} MB")
-        if mb < 49:
-            break
-    return final
-
-
-# ============================================================ delivery
-def send_telegram(video, title, hashtags):
-    if not (TG_TOKEN and TG_CHAT):
-        log("Telegram secrets missing; skipping delivery")
-        return False
-    caption = f"\U0001F3AC {title}\n\n{hashtags}"[:1024]
-    base = f"https://api.telegram.org/bot{TG_TOKEN}"
-    with open(video, "rb") as f:
-        r = requests.post(base + "/sendVideo", data={"chat_id": TG_CHAT, "caption": caption, "supports_streaming": "true",
-                                                      "width": 1080, "height": 1920}, files={"video": f}, timeout=600)
-    log("Telegram sendVideo:", r.status_code, r.text[:200])
-    if not r.ok:
-        with open(video, "rb") as f:
-            r = requests.post(base + "/sendDocument", data={"chat_id": TG_CHAT, "caption": caption}, files={"document": f}, timeout=600)
-        log("Telegram sendDocument:", r.status_code, r.text[:200])
-    if not r.ok:
-        raise RuntimeError("Telegram delivery failed: " + r.text[:300])
-    return True
-
-
-# ============================================================ main
-def pick_topic(raw):
-    if raw and raw.lower() != "auto":
-        return raw
-    used_file = os.path.join(ROOT, "used_topics.json")
-    try:
-        used = json.load(open(used_file))
-    except Exception:
-        used = []
-    left = [t for t in TOPICS if t not in used] or TOPICS
-    t = random.choice(left)
-    json.dump((used + [t])[-40:], open(used_file, "w"), indent=1)
-    return t
-
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("topic", nargs="?", default=os.environ.get("TOPIC", "auto"))
-    ap.add_argument("--story")
-    ap.add_argument("--stills")
-    ap.add_argument("--skip-telegram", action="store_true")
-    ap.add_argument("--parts", type=int, default=int(os.environ.get("RENDER_PARTS", "3")))
-    a = ap.parse_args()
-
-    check_engine_assets()
-    topic = pick_topic((a.topic or "auto").strip())
-    log("topic:", topic)
-    story = make_story(topic, a.story)
-    log("title:", story["title"], "|", story["hashtags"])
-    log("script:\n  " + "\n  ".join(story["sentences"]))
-
-    adir = os.path.join(STUDIO, "_audio_build")             # outside PROJ, which setup_project() recreates
-    shutil.rmtree(adir, ignore_errors=True)
-    os.makedirs(adir)
-    words, starts, dur = build_voice(story["sentences"], adir)
-    log(f"voice ready: {dur:.2f}s, sentence starts {starts}")
-
-    setup_project(story, words, starts)
-    shutil.copy(os.path.join(adir, "vo.wav"), os.path.join(PROJ, "audio", "vo.wav"))
-    shutil.rmtree(adir, ignore_errors=True)
-
-    if a.stills:
-        render_stills([float(x) for x in a.stills.split(",")])
-        return
-    silent = render_video(max(1, a.parts))
-    final = mux(silent)
-    info = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "stream=codec_name,width,height,r_frame_rate,duration",
-                                    "-of", "default=nw=1", final]).decode()
-    log(info)
-    with open(os.path.join(PROJ, "out", "meta.txt"), "w") as f:
-        f.write(f"{story['title']}\n{story['hashtags']}\n")
-    if not a.skip_telegram:
-        note = "(Groq failed, built-in fallback story) " if story.get("fallback") else ""
-        send_telegram(final, note + story["title"], story["hashtags"])
-    log("done:", final)
-
-
-if __name__ == "__main__":
-    main()
+    
