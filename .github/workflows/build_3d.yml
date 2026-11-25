@@ -1,0 +1,111 @@
+name: 3D Cartoon Video Factory
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Video topic (or 'auto' to pick one)"
+        required: false
+        default: "auto"
+  schedule:
+    - cron: "0 12 * * *"
+
+jobs:
+  render-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Arrange files
+        run: |
+          mkdir -p pipeline
+          for f in dashcam_video.js story_video.js requirements.txt; do
+            [ -f "$f" ] && cp "$f" pipeline/ || true
+          done
+          ls
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffmpeg -version | head -n 1
+          ffprobe -version | head -n 1
+
+      - name: Install Python libs
+        run: pip install -q -r requirements.txt
+
+      - name: Get the 3D engine if the repo does not have it
+        run: |
+          if [ ! -d 3d-video-studio/engine ]; then
+            git clone --depth 1 https://github.com/codewithsiddique-04/3d-video-studio 3d-video-studio-src
+            mv 3d-video-studio-src 3d-video-studio
+          fi
+          ls 3d-video-studio
+
+      - name: Cache Kokoro voice model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: kokoro-v1.0-int8
+
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Install engine (three.js, Poppins font)
+        working-directory: 3d-video-studio/engine
+        run: |
+          set -euo pipefail
+          rm -rf node_modules            # never keep a stale or broken node_modules link
+          npm ci --no-audit --no-fund
+          test -f node_modules/three/build/three.module.js
+          test -f node_modules/@fontsource/poppins/files/poppins-latin-800-normal.woff2
+          echo "engine deps OK"
+
+      - name: Install kit (Playwright + Chromium)
+        working-directory: 3d-video-studio/kit
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          test -f node_modules/playwright/package.json
+          echo "kit deps OK"
+
+      - name: Generate, render and deliver
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TOPIC: ${{ github.event.inputs.topic || 'auto' }}
+          GL: swiftshader
+          RENDER_PARTS: "3"
+        run: python factory.py "$TOPIC"
+
+      - name: Upload MP4 artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 3d-cartoon-video
+          path: |
+            3d-video-studio/project_out/out/final_short.mp4
+            3d-video-studio/project_out/out/meta.txt
+            3d-video-studio/project_out/story.json
+          if-no-files-found: warn
+          retention-days: 14
+          
